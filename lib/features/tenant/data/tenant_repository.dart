@@ -92,14 +92,16 @@ class TenantRepository {
     required CodeKind expected,
     AppRole? staffRole,
   }) async {
-    final info = await peekCode(code);
-    _checkKind(info, expected);
     final cred = await _auth.createUserWithEmailAndPassword(
       email: email.trim(),
       password: password,
     );
     final user = cred.user!;
     try {
+      // O código só pode ser lido por quem está logado, então a conta é criada
+      // antes de validá-lo (e desfeita abaixo se o código não servir).
+      final info = await peekCode(code);
+      _checkKind(info, expected);
       await _db.collection('users').doc(user.uid).set({
         'name': name.trim(),
         'email': user.email,
