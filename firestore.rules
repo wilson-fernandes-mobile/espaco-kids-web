@@ -121,6 +121,10 @@ service cloud.firestore {
               && exists(/databases/$(database)/documents/tenants/$(churchId)/joinCodes/$(request.resource.data.joinCode))
               && get(/databases/$(database)/documents/tenants/$(churchId)/joinCodes/$(request.resource.data.joinCode)).data.active == true);
         allow update: if isAdmin(churchId)
+          // Cada pessoa troca a própria foto de perfil.
+          || (request.auth.uid == uid && isMember(churchId)
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['photoUrl'])
+              && (!('photoUrl' in request.resource.data) || request.resource.data.photoUrl is string))
           // Quem ainda não tem família cria a própria (doc families/{uid}) e a vincula aqui.
           || (request.auth.uid == uid && isMember(churchId) && !isFamily(churchId)
               && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['familyId'])
