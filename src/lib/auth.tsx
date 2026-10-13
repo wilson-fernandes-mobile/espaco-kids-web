@@ -432,13 +432,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password: string;
       role: StaffRole;
     }) => {
-      const invite = await peekInvite(i.code);
       const cred = await createUserWithEmailAndPassword(
         auth(),
         i.email.trim(),
         i.password,
       );
       try {
+        // `codes/{código}` só pode ser lido por quem está logado: a conta é
+        // criada antes de validar o código (e desfeita abaixo se não servir).
+        const invite = await peekInvite(i.code);
         await updateProfile(cred.user, { displayName: i.name.trim() });
         await ensureUserDoc(cred.user.uid, i.name, i.email);
         await joinAsStaff(
