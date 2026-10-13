@@ -17,8 +17,11 @@ class ChildDraft {
     required this.birthDate,
     this.health = '',
     this.notes = '',
+    this.photoUrl,
   });
 
+  /// Foto (data URL). Null mantém a atual; vazio remove.
+  final String? photoUrl;
   final String fullName;
   final String nickname;
 
@@ -130,6 +133,8 @@ class FamilyRepository {
       'guardianIds': guardians.docs.map((d) => d.id).toList(),
       'authorizedIds': <String>[],
       'createdBy': uid,
+      if (draft.photoUrl != null && draft.photoUrl!.isNotEmpty)
+        'photoUrl': draft.photoUrl,
     });
     await t.collection('health').doc(ref.id).set({
       'text': draft.health.trim(),
@@ -147,6 +152,9 @@ class FamilyRepository {
       'nickname': draft.nickname.trim(),
       'birthDate': draft.birthDate,
       'notes': draft.notes.trim(),
+      if (draft.photoUrl != null)
+        'photoUrl':
+            draft.photoUrl!.isEmpty ? FieldValue.delete() : draft.photoUrl,
     });
     await t.collection('health').doc(childId).set({
       'text': draft.health.trim(),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/date_format.dart';
+import '../../../../shared/widgets/photo_field.dart';
 import '../../../../shared/widgets/feedback.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../kids/domain/entities/child.dart';
@@ -16,7 +17,8 @@ class ChildFormController {
       nickname = TextEditingController(text: child?.nickname),
       health = TextEditingController(text: health),
       notes = TextEditingController(text: child?.notes),
-      birth = child?.birthDate.isNotEmpty == true ? child!.birthDate : null;
+      birth = child?.birthDate.isNotEmpty == true ? child!.birthDate : null,
+      photo = child?.photoUrl;
 
   final TextEditingController name;
   final TextEditingController nickname;
@@ -25,6 +27,9 @@ class ChildFormController {
 
   /// Data ISO (aaaa-mm-dd).
   String? birth;
+
+  /// Foto (data URL); vazio = removida.
+  String? photo;
 
   bool get hasName => name.text.trim().length >= 2;
 
@@ -37,6 +42,7 @@ class ChildFormController {
             birthDate: birth!,
             health: health.text,
             notes: notes.text,
+            photoUrl: photo,
           );
 
   void dispose() {
@@ -78,6 +84,15 @@ class _ChildFormFieldsState extends State<ChildFormFields> {
     final c = widget.controller;
     return Column(
       children: [
+        Center(
+          child: PhotoField(
+            name: c.name.text,
+            photo: c.photo,
+            radius: 44,
+            onChanged: (p) => setState(() => c.photo = p ?? ''),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
         TextFormField(
           controller: c.name,
           textCapitalization: TextCapitalization.words,

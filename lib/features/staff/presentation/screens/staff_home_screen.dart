@@ -160,6 +160,7 @@ class StaffHomeScreen extends ConsumerWidget {
             icon: Icons.meeting_room_outlined,
             title: 'Turmas',
           ),
+          const SizedBox(height: AppSpacing.md),
           if (shown.isEmpty)
             const SizedBox(
               height: 160,

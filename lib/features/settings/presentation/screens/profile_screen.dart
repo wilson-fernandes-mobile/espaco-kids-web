@@ -7,7 +7,7 @@ import '../../../../core/theme/theme_color_option.dart';
 import '../../../../core/theme/theme_color_provider.dart';
 import '../../../../core/theme/theme_mode_provider.dart';
 import '../../../../shared/widgets/feedback.dart';
-import '../../../../shared/widgets/person_avatar.dart';
+import '../../../../shared/widgets/photo_field.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 
 /// Perfil, aparência (tema/cor) e sair — compartilhado por todos os papéis.
@@ -28,7 +28,17 @@ class ProfileScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.md),
         children: [
-          Center(child: PersonAvatar(name: user.name, radius: 40)),
+          Center(
+            child: PhotoField(
+              name: user.name,
+              photo: user.photoUrl,
+              radius: 48,
+              onChanged:
+                  (p) => ref
+                      .read(authRepositoryProvider)
+                      .setPhoto(user.churchId, user.uid, p),
+            ),
+          ),
           const SizedBox(height: AppSpacing.md),
           Text(
             user.name,

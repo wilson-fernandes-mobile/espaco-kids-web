@@ -15,6 +15,7 @@ class AppUser {
     this.churchId = '',
     this.churchName = '',
     this.asFamily = false,
+    this.photoUrl,
   });
 
   final String uid;
@@ -27,6 +28,9 @@ class AppUser {
   final String churchName;
   final String name;
   final String email;
+
+  /// Foto de perfil (data URL) gravada em `members/{uid}`.
+  final String? photoUrl;
   final AppRole role;
   final bool active;
   final List<String> classIds;
@@ -60,6 +64,7 @@ class AppUser {
     churchId: churchId,
     churchName: churchName,
     asFamily: true,
+    photoUrl: photoUrl,
   );
 
   /// Lê o vínculo `tenants/{churchId}/members/{uid}`.
@@ -84,6 +89,7 @@ class AppUser {
       personKind: m['personKind'] as String?,
       churchId: churchId,
       churchName: churchName,
+      photoUrl: m['photoUrl'] as String?,
     );
   }
 }

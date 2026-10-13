@@ -4,6 +4,8 @@
 <dict>
 	<key>NSCameraUsageDescription</key>
 	<string>A câmera é usada para ler o QR Code do crachá da criança.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Escolha uma foto de perfil ou da criança na sua galeria.</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array><string>https</string><string>tel</string></array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>

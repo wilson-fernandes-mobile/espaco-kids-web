@@ -33,4 +33,12 @@ class AuthRepository {
       .collection('members')
       .doc(uid)
       .update({'personId': personId, 'personKind': personKind});
+
+  /// Foto de perfil da pessoa na igreja (data URL; null remove).
+  Future<void> setPhoto(String churchId, String uid, String? photo) => _db
+      .collection('tenants')
+      .doc(churchId)
+      .collection('members')
+      .doc(uid)
+      .update({'photoUrl': photo ?? FieldValue.delete()});
 }
