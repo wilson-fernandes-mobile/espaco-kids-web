@@ -10,6 +10,14 @@ bun run dev         # http://localhost:5173
 ```
 Antes do primeiro login: habilite **E-mail/senha** em Firebase → Authentication (ver `docs/FIREBASE.md`). Depois, na tela de login, **Criar administrador**.
 
+## Publicar (Firebase Hosting)
+```sh
+bun run build
+firebase deploy --only hosting --project espacokids-app
+```
+
+O painel e uma SPA estatica (`dist/client`, fallback em `_shell.html`).
+
 ## Documentação
 - [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md) — camadas, modelo de dados, segurança, próximos passos
 - [`docs/FIREBASE.md`](docs/FIREBASE.md) — projeto, variáveis, deploy das regras
@@ -18,8 +26,6 @@ Antes do primeiro login: habilite **E-mail/senha** em Firebase → Authenticatio
 
 ## Stack
 TanStack Start · React 19 · TypeScript · Tailwind v4 · shadcn/ui · react-hook-form + zod · Recharts · qrcode.react + jsQR · Firebase.
-
-Projeto sincronizado com Lovable: evite reescrever histórico git publicado.
 
 ## App mobile
 Mapeamento do app Flutter (professores, recepção e famílias): [docs/MOBILE.md](docs/MOBILE.md).
