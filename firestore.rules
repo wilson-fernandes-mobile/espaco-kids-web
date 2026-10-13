@@ -1,0 +1,282 @@
+rules_version = '2';
+
+// Modelo multi-tenant: todo dado de negócio vive em /tenants/{churchId}/...
+// Uma igreja NUNCA lê/escreve dados de outra: cada regra valida que o usuário
+// autenticado tem um vínculo ativo em `tenants/{churchId}/members/{uid}` e usa
+// o papel DAQUELA igreja (a mesma pessoa pode ser admin numa e família noutra).
+//
+// Observação: `get()` em doc inexistente LANÇA erro na avaliação (vira
+// permission-denied). Por isso todo uso de `memberData`/`role` vem depois de
+// `isMember(churchId)`, que checa `exists()` primeiro.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+
+    function memberPath(churchId) {
+      return /databases/$(database)/documents/tenants/$(churchId)/members/$(request.auth.uid);
+    }
+    function isMember(churchId) {
+      return signedIn() && exists(memberPath(churchId)) && get(memberPath(churchId)).data.active == true;
+    }
+    function memberData(churchId) { return get(memberPath(churchId)).data; }
+    function role(churchId) { return memberData(churchId).role; }
+
+    function isAdmin(churchId) { return isMember(churchId) && role(churchId) == 'admin'; }
+    function isCoord(churchId) { return isMember(churchId) && role(churchId) in ['admin', 'coordenacao']; }
+    function isStaff(churchId) { return isMember(churchId) && role(churchId) != 'responsavel'; }
+    // "Família" = tem uma família vinculada nesta igreja. Vale também para
+    // professor/recepção/admin que são pai ou mãe (acumulam os dois acessos).
+    function isFamily(churchId) { return isMember(churchId) && memberData(churchId).get('familyId', null) != null; }
+    function myFamily(churchId) { return memberData(churchId).familyId; }
+    function canRegister(churchId) { return isMember(churchId) && role(churchId) in ['admin', 'coordenacao', 'recepcao']; }
+
+    // Perfil global da pessoa (nome, e-mail, tokens de push). O papel NÃO fica
+    // aqui: mora em cada igreja.
+    match /users/{uid} {
+      allow get: if signedIn() && request.auth.uid == uid;
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['name', 'email', 'createdAt', 'fcmTokens'])
+        && request.resource.data.email == request.auth.token.email;
+      allow update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'fcmTokens']);
+      allow delete: if signedIn() && request.auth.uid == uid;
+
+      // Cópia denormalizada dos vínculos, só para listar "minhas igrejas" com
+      // uma query. A fonte da verdade é `tenants/{churchId}/members/{uid}`.
+      match /memberships/{churchId} {
+        allow read: if signedIn() && request.auth.uid == uid;
+        // O dono cria/remove a própria cópia (entrada por código, criar
+        // igreja, sair); o admin da igreja mantém a de outros (mudar papel).
+        // Fingir uma cópia só faz a igreja aparecer na lista: os dados dela
+        // continuam protegidos pelo vínculo em `members`.
+        allow create, update, delete: if signedIn() && (request.auth.uid == uid || isAdmin(churchId));
+      }
+    }
+
+    // Códigos públicos -> igreja. `kind`: 'invite' (equipe) ou 'family'
+    // (vínculo da família). Só `get` por código (sem listar). Quem cria é a
+    // equipe da própria igreja, junto com o doc do código dentro do tenant.
+    match /codes/{code} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn()
+        && request.resource.data.churchId is string
+        && request.resource.data.kind in ['invite', 'family', 'join']
+        && (request.resource.data.kind == 'family'
+            ? (canRegister(request.resource.data.churchId) || isFamily(request.resource.data.churchId))
+            : isAdmin(request.resource.data.churchId));
+      allow update, delete: if signedIn()
+        && (resource.data.kind == 'family'
+            ? (canRegister(resource.data.churchId) || isFamily(resource.data.churchId))
+            : isAdmin(resource.data.churchId));
+    }
+
+    match /tenants/{churchId} {
+      allow get: if isMember(churchId);
+      allow list: if false;
+      // Qualquer pessoa autenticada pode criar uma igreja (vira o admin dela).
+      allow create: if signedIn() && request.resource.data.createdBy == request.auth.uid;
+      allow update: if isAdmin(churchId);
+      allow delete: if false;
+
+      // Vínculo de cada pessoa com esta igreja.
+      match /members/{uid} {
+        allow get: if signedIn() && (request.auth.uid == uid || isAdmin(churchId));
+        allow list: if isAdmin(churchId);
+        allow create: if isAdmin(churchId)
+          // Quem cria a igreja vira admin (o doc da igreja ainda não existe).
+          || (request.auth.uid == uid
+              && request.resource.data.role == 'admin'
+              && !exists(/databases/$(database)/documents/tenants/$(churchId)))
+          // Equipe entra com código de convite válido, só papéis de baixo privilégio.
+          || (request.auth.uid == uid
+              && request.resource.data.keys().hasOnly(['name', 'email', 'role', 'classIds', 'active', 'createdAt', 'inviteCode'])
+              && request.resource.data.role in ['professor', 'recepcao']
+              && request.resource.data.active == true
+              && request.resource.data.classIds.size() == 0
+              && request.resource.data.email == request.auth.token.email
+              && request.resource.data.inviteCode is string
+              && exists(/databases/$(database)/documents/tenants/$(churchId)/invites/$(request.resource.data.inviteCode))
+              && get(/databases/$(database)/documents/tenants/$(churchId)/invites/$(request.resource.data.inviteCode)).data.active == true)
+          // Família entra com o código de vínculo gerado pela equipe.
+          || (request.auth.uid == uid
+              && request.resource.data.keys().hasOnly(['name', 'email', 'role', 'familyId', 'linkCode', 'classIds', 'active', 'createdAt'])
+              && request.resource.data.role == 'responsavel'
+              && request.resource.data.active == true
+              && request.resource.data.classIds.size() == 0
+              && request.resource.data.email == request.auth.token.email
+              && request.resource.data.linkCode is string
+              && exists(/databases/$(database)/documents/tenants/$(churchId)/familyLinks/$(request.resource.data.linkCode))
+              && get(/databases/$(database)/documents/tenants/$(churchId)/familyLinks/$(request.resource.data.linkCode)).data.active == true
+              && get(/databases/$(database)/documents/tenants/$(churchId)/familyLinks/$(request.resource.data.linkCode)).data.familyId == request.resource.data.familyId)
+          // Pais entram com o código da igreja e cadastram a própria família depois.
+          || (request.auth.uid == uid
+              && request.resource.data.keys().hasOnly(['name', 'email', 'role', 'classIds', 'active', 'createdAt', 'joinCode'])
+              && request.resource.data.role == 'responsavel'
+              && request.resource.data.active == true
+              && request.resource.data.classIds.size() == 0
+              && request.resource.data.email == request.auth.token.email
+              && request.resource.data.joinCode is string
+              && exists(/databases/$(database)/documents/tenants/$(churchId)/joinCodes/$(request.resource.data.joinCode))
+              && get(/databases/$(database)/documents/tenants/$(churchId)/joinCodes/$(request.resource.data.joinCode)).data.active == true);
+        allow update: if isAdmin(churchId)
+          // Quem ainda não tem família cria a própria (doc families/{uid}) e a vincula aqui.
+          || (request.auth.uid == uid && isMember(churchId) && !isFamily(churchId)
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['familyId'])
+              && request.resource.data.familyId == request.auth.uid
+              && exists(/databases/$(database)/documents/tenants/$(churchId)/families/$(request.auth.uid)))
+          // A família só informa quem ela é na lista (personId/personKind).
+          || (request.auth.uid == uid && isFamily(churchId)
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['personId', 'personKind']))
+          // Quem entrou como FAMÍLIA vira voluntário (professor/recepção) com um convite
+          // válido, mantendo a família vinculada (passa a acumular os dois acessos).
+          || (request.auth.uid == uid && isMember(churchId)
+              && role(churchId) == 'responsavel'
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role', 'inviteCode'])
+              && request.resource.data.role in ['professor', 'recepcao']
+              && request.resource.data.inviteCode is string
+              && exists(/databases/$(database)/documents/tenants/$(churchId)/invites/$(request.resource.data.inviteCode))
+              && get(/databases/$(database)/documents/tenants/$(churchId)/invites/$(request.resource.data.inviteCode)).data.active == true)
+          // Voluntário (professor/recepção/coordenação) vincula a PRÓPRIA família com um
+          // código válido, uma vez só (ainda sem família), sem mudar o papel.
+          || (request.auth.uid == uid && isStaff(churchId)
+              && !isFamily(churchId)
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['familyId', 'linkCode'])
+              && request.resource.data.linkCode is string
+              && exists(/databases/$(database)/documents/tenants/$(churchId)/familyLinks/$(request.resource.data.linkCode))
+              && get(/databases/$(database)/documents/tenants/$(churchId)/familyLinks/$(request.resource.data.linkCode)).data.active == true
+              && get(/databases/$(database)/documents/tenants/$(churchId)/familyLinks/$(request.resource.data.linkCode)).data.familyId == request.resource.data.familyId);
+        // O admin remove membros; qualquer um pode sair da própria igreja.
+        allow delete: if isAdmin(churchId) || (signedIn() && request.auth.uid == uid);
+      }
+
+      // Convites: o admin gera um código; quem o usa entra como professor/recepção.
+      match /invites/{code} {
+        allow read, write: if isAdmin(churchId);
+      }
+      // Código de vínculo da família: a equipe gera; a família o usa no cadastro.
+      match /familyLinks/{code} {
+        allow get: if signedIn();
+        allow list: if isStaff(churchId)
+          || (isFamily(churchId) && resource.data.familyId == myFamily(churchId));
+        allow create: if canRegister(churchId)
+          || (isFamily(churchId) && request.resource.data.familyId == myFamily(churchId));
+        allow update, delete: if canRegister(churchId)
+          || (isFamily(churchId) && resource.data.familyId == myFamily(churchId));
+      }
+      // Código de entrada dos pais (um por igreja): o admin gera; quem o usa cria a conta
+      // e cadastra a própria família e as crianças.
+      match /joinCodes/{code} {
+        allow read, write: if isAdmin(churchId);
+      }
+      match /meta/{doc} {
+        allow read: if isStaff(churchId);
+        allow write: if canRegister(churchId);
+      }
+      match /settings/{doc} {
+        allow read: if isStaff(churchId);
+        allow write: if isAdmin(churchId);
+      }
+
+      // Saúde: acesso restrito à coordenação/admin
+      match /health/{childId} {
+        allow read, write: if isCoord(churchId);
+        // O professor da turma da criança lê os detalhes (medicação, crises, alergias).
+        allow read: if isMember(churchId) && role(churchId) == 'professor'
+          && get(/databases/$(database)/documents/tenants/$(churchId)/children/$(childId)).data.classId in memberData(churchId).classIds;
+        // A família informa e vê a saúde dos próprios filhos.
+        allow read, create, update: if isFamily(churchId)
+          && get(/databases/$(database)/documents/tenants/$(churchId)/children/$(childId)).data.familyId == myFamily(churchId);
+      }
+
+      // A família cadastra e edita os próprios dados (família = doc com o id do usuário,
+      // ou a criada pela equipe). Mudanças de turma, código e status são da equipe.
+      function ownFamilyDoc(churchId, fid) { return isFamily(churchId) && fid == myFamily(churchId); }
+
+      match /children/{id} {
+        allow read: if isStaff(churchId) || (isFamily(churchId) && resource.data.familyId == myFamily(churchId));
+        allow create: if canRegister(churchId)
+          || (ownFamilyDoc(churchId, request.resource.data.familyId)
+              && request.resource.data.keys().hasOnly(['code', 'fullName', 'nickname', 'birthDate', 'photoUrl', 'classId', 'familyId', 'notes', 'status', 'guardianIds', 'authorizedIds', 'createdBy', 'careAlert', 'hasMedication'])
+              && request.resource.data.status == 'ativo'
+              && request.resource.data.createdBy == request.auth.uid);
+        allow update: if canRegister(churchId)
+          || (ownFamilyDoc(churchId, resource.data.familyId)
+              && request.resource.data.familyId == resource.data.familyId
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['fullName', 'nickname', 'birthDate', 'photoUrl', 'notes', 'guardianIds', 'authorizedIds', 'careAlert', 'hasMedication']));
+        allow delete: if isCoord(churchId);
+      }
+      match /families/{id} {
+        allow read: if isStaff(churchId) || (isFamily(churchId) && id == myFamily(churchId));
+        allow create: if canRegister(churchId)
+          || (request.auth.uid == id && isMember(churchId) && !isFamily(churchId)
+              && request.resource.data.keys().hasOnly(['code', 'name', 'phone', 'email', 'address', 'ownerUid'])
+              && request.resource.data.ownerUid == request.auth.uid);
+        allow update: if canRegister(churchId)
+          || (ownFamilyDoc(churchId, id)
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'phone', 'email', 'address']));
+        allow delete: if isCoord(churchId);
+      }
+      match /guardians/{id} {
+        allow read: if isStaff(churchId) || (isFamily(churchId) && resource.data.familyId == myFamily(churchId));
+        allow create: if canRegister(churchId) || ownFamilyDoc(churchId, request.resource.data.familyId);
+        allow update: if canRegister(churchId)
+          || (ownFamilyDoc(churchId, resource.data.familyId) && request.resource.data.familyId == resource.data.familyId);
+        allow delete: if isCoord(churchId) || ownFamilyDoc(churchId, resource.data.familyId);
+      }
+      match /authorized/{id} {
+        allow read: if isStaff(churchId) || (isFamily(churchId) && resource.data.familyId == myFamily(churchId));
+        allow create: if canRegister(churchId) || ownFamilyDoc(churchId, request.resource.data.familyId);
+        allow update: if canRegister(churchId)
+          || (ownFamilyDoc(churchId, resource.data.familyId) && request.resource.data.familyId == resource.data.familyId);
+        allow delete: if isCoord(churchId) || ownFamilyDoc(churchId, resource.data.familyId);
+      }
+      match /classes/{id}     { allow read: if isMember(churchId); allow write: if isCoord(churchId); }
+      match /badges/{id}      { allow read: if isStaff(churchId); allow create, update: if canRegister(churchId); allow delete: if false; }
+
+      match /attendance/{id}  { allow read: if isStaff(churchId); allow create, update: if canRegister(churchId); allow delete: if false; }
+      match /presence/{childId} {
+        allow read: if isStaff(churchId)
+          || (isFamily(churchId) && get(/databases/$(database)/documents/tenants/$(churchId)/children/$(childId)).data.familyId == myFamily(churchId));
+        allow create, delete: if canRegister(churchId);
+        allow update: if false;
+      }
+
+      match /calls/{id} {
+        allow read: if isStaff(churchId) || (isFamily(churchId) && resource.data.familyId == myFamily(churchId));
+        allow create: if isStaff(churchId);
+        allow update: if isStaff(churchId)
+          // A família só marca "estou indo" (status + histórico).
+          || (isFamily(churchId) && resource.data.familyId == myFamily(churchId)
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'history']));
+        allow delete: if false;
+      }
+
+      // Pedidos "estou chegando" / "vou buscar" feitos no app da família; a recepção confirma.
+      match /checkinRequests/{id} {
+        allow read: if isStaff(churchId) || (isFamily(churchId) && resource.data.familyId == myFamily(churchId));
+        allow create: if isFamily(churchId)
+          && request.resource.data.familyId == myFamily(churchId)
+          && request.resource.data.requesterUid == request.auth.uid
+          && request.resource.data.status == 'pendente'
+          && request.resource.data.kind in ['entrada', 'saida']
+          && get(/databases/$(database)/documents/tenants/$(churchId)/children/$(request.resource.data.childId)).data.familyId == myFamily(churchId);
+        allow update: if canRegister(churchId)
+          || (isFamily(churchId) && resource.data.familyId == myFamily(churchId)
+              && resource.data.status == 'pendente'
+              && request.resource.data.status == 'cancelado'
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'resolvedAt']));
+        allow delete: if false;
+      }
+      match /notifications/{id} { allow read: if isStaff(churchId); allow create, update: if isStaff(churchId); allow delete: if false; }
+
+      // Auditoria: imutável
+      match /audit/{id} {
+        allow read: if isCoord(churchId);
+        allow create: if isStaff(churchId) && request.resource.data.uid == request.auth.uid;
+        allow update, delete: if false;
+      }
+    }
+  }
+}
