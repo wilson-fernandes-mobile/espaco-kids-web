@@ -1,0 +1,51 @@
+name: espaco_kids
+description: "Espaço Kids — check-in e check-out seguro de crianças no ministério infantil (professores, recepção e famílias)."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.7.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # Firebase (mesmo projeto do sistema web: espacokids-app)
+  firebase_core: ^3.8.0
+  firebase_auth: ^5.3.3
+  cloud_firestore: ^5.5.0
+  firebase_messaging: ^15.1.6
+
+  # Estado e rotas
+  flutter_riverpod: ^2.6.1
+  go_router: ^14.6.2
+
+  # UI / design system (herdado do MoveScheduler)
+  google_fonts: ^6.2.1
+
+  # Utilitários
+  intl: ^0.20.2
+  shared_preferences: ^2.3.3
+  url_launcher: ^6.3.1
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^6.0.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  image_path: "assets/icon/ic_app.png"
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/icon/
