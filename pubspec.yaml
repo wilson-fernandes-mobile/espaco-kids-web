@@ -19,6 +19,11 @@ dependencies:
   cloud_firestore: ^5.5.0
   firebase_messaging: ^15.1.6
 
+  # Login social
+  google_sign_in: ^6.2.2
+  sign_in_with_apple: ^6.1.4
+  crypto: ^3.0.6
+
   # Estado e rotas
   flutter_riverpod: ^2.6.1
   go_router: ^14.6.2

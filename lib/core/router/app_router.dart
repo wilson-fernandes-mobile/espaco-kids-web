@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../constants/app_role.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
+import '../../features/auth/presentation/screens/complete_signup_screen.dart';
 import '../../features/auth/presentation/screens/gate_screens.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
@@ -16,6 +17,7 @@ import '../../features/family/presentation/screens/family_setup_screen.dart';
 import '../../features/family/presentation/screens/family_people_screen.dart';
 import '../../features/kids/presentation/screens/child_detail_screen.dart';
 import '../../features/settings/presentation/screens/profile_screen.dart';
+import '../../features/tenant/presentation/providers/tenant_providers.dart';
 import '../../features/tenant/presentation/screens/church_select_screen.dart';
 import '../../features/staff/presentation/screens/children_screen.dart';
 import '../../features/staff/presentation/screens/staff_home_screen.dart';
@@ -106,7 +108,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         case SessionStatus.signedOut:
           return _publicRoutes.contains(loc) ? null : '/login';
         case SessionStatus.needsChurch:
-          return loc == '/igrejas' ? null : '/igrejas';
+          // Conta nova (ex.: Google/Apple) sem igreja: conclui o cadastro.
+          final none =
+              ref.read(membershipsProvider).valueOrNull?.isEmpty ?? false;
+          final target = none ? '/finalizar' : '/igrejas';
+          return loc == target ? null : target;
         case SessionStatus.noProfile:
         case SessionStatus.inactive:
           // Pode trocar de igreja mesmo com acesso bloqueado numa delas.
@@ -134,6 +140,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/splash', builder: (_, _) => const SplashScreen()),
       GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
       GoRoute(path: '/signup', builder: (_, _) => const SignupScreen()),
+      GoRoute(
+        path: '/finalizar',
+        builder: (_, _) => const CompleteSignupScreen(),
+      ),
       GoRoute(
         path: '/saude/:id',
         builder: (_, st) => CareFormScreen(childId: st.pathParameters['id']!),

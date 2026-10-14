@@ -123,6 +123,42 @@ class TenantRepository {
     }
   }
 
+  /// Conclui o cadastro de quem entrou com Google/Apple pela primeira vez: a
+  /// conta já existe, falta o código da igreja. Em caso de erro a conta é
+  /// mantida para a pessoa tentar de novo.
+  Future<String> completeSocialSignUp({
+    required String code,
+    required String name,
+    required CodeKind expected,
+    AppRole? staffRole,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) throw const Failure('Entre na sua conta primeiro.');
+    final email = user.email;
+    if (email == null || email.isEmpty) {
+      throw const Failure('Sua conta não tem e-mail. Use outra forma de entrar.');
+    }
+    final info = await peekCode(code);
+    _checkKind(info, expected);
+    final users = _db.collection('users').doc(user.uid);
+    final profile = await users.get();
+    if (!profile.exists) {
+      await users.set({
+        'name': name.trim(),
+        'email': email,
+        'createdAt': nowIso(),
+      });
+    }
+    await joinChurch(
+      info: info,
+      uid: user.uid,
+      name: name.trim(),
+      email: email,
+      staffRole: staffRole,
+    );
+    return info.churchId;
+  }
+
   /// Quem já tem conta entra noutra igreja com um código (ex.: um admin
   /// visitando outra igreja como família).
   Future<String> joinWithCode({

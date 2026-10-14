@@ -6,6 +6,13 @@
 	<string>A câmera é usada para ler o QR Code do crachá da criança.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Escolha uma foto de perfil ou da criança na sua galeria.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array><string>com.googleusercontent.apps.479251880139-tfsfm3oubfp8i0a72rv5hnpt4113d66d</string></array>
+		</dict>
+	</array>
 	<key>UIBackgroundModes</key>
 	<array><string>remote-notification</string></array>
 	<key>LSApplicationQueriesSchemes</key>

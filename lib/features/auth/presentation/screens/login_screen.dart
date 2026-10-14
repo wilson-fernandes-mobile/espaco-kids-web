@@ -7,6 +7,7 @@ import '../../../../shared/widgets/feedback.dart';
 import '../providers/auth_providers.dart';
 import '../widgets/auth_background.dart';
 import '../widgets/logo_header.dart';
+import '../widgets/social_buttons.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -140,6 +141,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           child: const Text('Criar conta com código'),
                         ),
                       ),
+                      const SizedBox(height: AppSpacing.lg),
+                      const SocialButtons(),
                     ],
                   ),
                 ),
