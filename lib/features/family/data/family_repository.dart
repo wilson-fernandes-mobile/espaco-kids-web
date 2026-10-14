@@ -254,10 +254,12 @@ class FamilyRepository {
       } else
         'validUntil': validUntil ?? '',
     });
-    final field = isGuardian ? 'guardianIds' : 'authorizedIds';
     for (final c in children) {
+      // Responsável também já pode retirar a criança; a pessoa autorizada só
+      // entra na lista de retirada.
       await t.collection('children').doc(c.id).update({
-        field: FieldValue.arrayUnion([ref.id]),
+        if (isGuardian) 'guardianIds': FieldValue.arrayUnion([ref.id]),
+        'authorizedIds': FieldValue.arrayUnion([ref.id]),
       });
     }
     return ref.id;
