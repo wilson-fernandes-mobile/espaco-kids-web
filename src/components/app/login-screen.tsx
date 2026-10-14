@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { AppLogo } from "@/components/app/app-logo";
 import { Link } from "@tanstack/react-router";
 import {
   useForm,
@@ -11,7 +12,6 @@ import { z } from "zod";
 import {
   ArrowLeft,
   Building2,
-  Church,
   Eye,
   KeyRound,
   EyeOff,
@@ -77,9 +77,7 @@ export function Splash({ label = "Carregando…" }: { label?: string }) {
   return (
     <div className="grid min-h-screen place-items-center bg-background">
       <div className="flex flex-col items-center gap-3 text-muted-foreground">
-        <div className="grid size-12 place-items-center rounded-2xl bg-primary text-primary-foreground">
-          <Church className="size-6" />
-        </div>
+        <AppLogo className="size-12 rounded-2xl" />
         <p className="flex items-center gap-2 text-sm">
           <Loader2 className="size-4 animate-spin" />
           {label}
@@ -136,9 +134,7 @@ function AuthLayout({
         <div className="pointer-events-none absolute -bottom-32 -left-20 size-[28rem] rounded-full bg-success/30" />
         <div className="relative flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="grid size-11 place-items-center rounded-xl bg-white/15 backdrop-blur">
-              <Church className="size-6" />
-            </div>
+            <AppLogo className="size-11" />
             <span className="text-lg font-bold">Espaço Kids</span>
           </div>
           {back && (
@@ -180,9 +176,7 @@ function AuthLayout({
         <div className="w-full max-w-md">
           <div className="mb-8 flex items-center justify-between lg:hidden">
             <div className="flex items-center gap-3">
-              <div className="grid size-10 place-items-center rounded-xl bg-primary text-primary-foreground">
-                <Church className="size-5" />
-              </div>
+              <AppLogo className="size-10" />
               <span className="font-bold">Espaço Kids</span>
             </div>
             {back && (

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { AppLogo } from "@/components/app/app-logo";
 import { doc, onSnapshot } from "firebase/firestore";
 import { Church, KeyRound, Loader2, LogOut, Plus, Smartphone } from "lucide-react";
 import { toast } from "sonner";
@@ -115,9 +116,7 @@ export function ChurchPicker() {
     <div className="grid min-h-screen place-items-center bg-background px-4 py-10">
       <div className="w-full max-w-lg space-y-4">
         <div className="text-center">
-          <div className="mx-auto grid size-12 place-items-center rounded-2xl bg-primary text-primary-foreground">
-            <Church className="size-6" />
-          </div>
+          <AppLogo className="mx-auto size-12 rounded-2xl" />
           <h1 className="mt-3 text-xl font-bold">Suas igrejas</h1>
           <p className="text-sm text-muted-foreground">
             {user?.email} · escolha onde quer entrar agora.

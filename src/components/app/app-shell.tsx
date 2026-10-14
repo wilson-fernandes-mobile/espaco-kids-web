@@ -1,4 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
+import { AppLogo } from "@/components/app/app-logo";
 import { useEffect, useState, type ReactNode } from "react";
 import {
   LayoutDashboard,
@@ -133,9 +134,7 @@ function SideNav({
             className="size-10 shrink-0 rounded-xl bg-card object-cover"
           />
         ) : (
-          <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground">
-            <Church className="size-5" />
-          </div>
+          <AppLogo className="size-10" />
         )}
         <div className={cn("min-w-0", collapsed && "hidden")}>
           <p className="truncate text-sm font-bold">Espaço Kids</p>
