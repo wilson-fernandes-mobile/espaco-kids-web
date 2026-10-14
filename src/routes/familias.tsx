@@ -522,17 +522,20 @@ function FamiliesPage() {
       const n = kids.filter((k) => k.authorizedIds.includes(personId)).length;
       const all = n === kids.length;
       return (
-        <>
-          <StatusPill
-            value={n > 0 ? "ativo" : "inativo"}
-            label={
-              n === 0
-                ? "Não retira"
-                : all
-                  ? "Pode retirar"
-                  : `Retira ${n}/${kids.length}`
-            }
-          />
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-muted/50 px-3 py-2">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span>Retirada das crianças</span>
+            <StatusPill
+              value={n > 0 ? "ativo" : "inativo"}
+              label={
+                n === 0
+                  ? "Não retira"
+                  : all
+                    ? "Pode retirar"
+                    : `Retira ${n}/${kids.length}`
+              }
+            />
+          </div>
           {canEdit && (
             <Button
               variant="outline"
@@ -546,10 +549,10 @@ function FamiliesPage() {
               }
             >
               {all ? <ShieldOff /> : <ShieldCheck />}
-              {all ? "Revogar" : "Autorizar"}
+              {all ? "Revogar retirada" : "Autorizar retirada"}
             </Button>
           )}
-        </>
+        </div>
       );
     };
     return (
@@ -631,41 +634,53 @@ function FamiliesPage() {
                 text="Cadastre ao menos um responsável."
               />
             ) : (
-              <ul className="-my-2 divide-y">
+              <ul className="divide-y">
                 {guardians.map((g) => (
-                  <li key={g.id} className="flex items-center gap-3 py-2.5">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium">{g.fullName}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {g.relation} • {g.phone} • {g.contactPref}
-                      </p>
-                    </div>
-                    {g.primary && (
-                      <StatusPill
-                        value="ativo"
-                        label="Principal"
-                        tone="primary"
+                  <li key={g.id} className="py-4 first:pt-1 last:pb-1">
+                    <div className="flex items-start gap-3">
+                      <KidAvatar
+                        child={{ id: g.id, fullName: g.fullName, nickname: g.fullName }}
                       />
-                    )}
-                    {!g.active && (
-                      <StatusPill value="inativo" label="Inativo" />
-                    )}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                          <p className="font-medium">{g.fullName}</p>
+                          {g.primary && (
+                            <StatusPill
+                              value="ativo"
+                              label="Principal"
+                              tone="primary"
+                            />
+                          )}
+                          {!g.active && (
+                            <StatusPill value="inativo" label="Inativo" />
+                          )}
+                        </div>
+                        <p className="mt-0.5 text-sm text-muted-foreground">
+                          {g.relation}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {g.phone} • contato por {g.contactPref}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-1">
+                        <WhatsAppButton
+                          guardian={g}
+                          size="icon"
+                          message={`Olá, ${g.fullName.split(" ")[0]}! Aqui é do Ministério Infantil da ${state.settings.name}.`}
+                        />
+                        {canEdit && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`Editar ${g.fullName}`}
+                            onClick={() => setDlg({ kind: "guardian", item: g })}
+                          >
+                            <Pencil />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
                     <PickupControl personId={g.id} name={g.fullName} />
-                    <WhatsAppButton
-                      guardian={g}
-                      size="icon"
-                      message={`Olá, ${g.fullName.split(" ")[0]}! Aqui é do Ministério Infantil da ${state.settings.name}.`}
-                    />
-                    {canEdit && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label="Editar"
-                        onClick={() => setDlg({ kind: "guardian", item: g })}
-                      >
-                        <Pencil />
-                      </Button>
-                    )}
                   </li>
                 ))}
               </ul>
@@ -689,44 +704,50 @@ function FamiliesPage() {
             {authorized.length === 0 ? (
               <EmptyState title="Nenhuma pessoa autorizada além dos responsáveis" />
             ) : (
-              <ul className="-my-2 divide-y">
+              <ul className="divide-y">
                 {authorized.map((a) => {
                   const expired = new Date(a.validUntil) < new Date();
                   return (
-                    <li
-                      key={a.id}
-                      className="flex flex-wrap items-center gap-3 py-2.5"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium">{a.fullName}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {a.relation} • {a.phone} • válido até{" "}
-                          {date(a.validUntil)}
-                        </p>
+                    <li key={a.id} className="py-4 first:pt-1 last:pb-1">
+                      <div className="flex items-start gap-3">
+                        <KidAvatar
+                          child={{ id: a.id, fullName: a.fullName, nickname: a.fullName }}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                            <p className="font-medium">{a.fullName}</p>
+                            {expired ? (
+                              <StatusPill
+                                value="cancelado"
+                                label="Vencida"
+                                tone="danger"
+                              />
+                            ) : (
+                              <StatusPill
+                                value={a.active ? "ativo" : "inativo"}
+                                label={a.active ? "Vigente" : "Revogada"}
+                              />
+                            )}
+                          </div>
+                          <p className="mt-0.5 text-sm text-muted-foreground">
+                            {a.relation}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {a.phone} • válido até {date(a.validUntil)}
+                          </p>
+                        </div>
+                        {canEdit && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`Editar ${a.fullName}`}
+                            onClick={() => setDlg({ kind: "auth", item: a })}
+                          >
+                            <Pencil />
+                          </Button>
+                        )}
                       </div>
-                      {expired ? (
-                        <StatusPill
-                          value="cancelado"
-                          label="Vencida"
-                          tone="danger"
-                        />
-                      ) : (
-                        <StatusPill
-                          value={a.active ? "ativo" : "inativo"}
-                          label={a.active ? "Vigente" : "Revogada"}
-                        />
-                      )}
                       <PickupControl personId={a.id} name={a.fullName} />
-                      {canEdit && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label="Editar"
-                          onClick={() => setDlg({ kind: "auth", item: a })}
-                        >
-                          <Pencil />
-                        </Button>
-                      )}
                     </li>
                   );
                 })}
