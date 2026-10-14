@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/date_format.dart';
 import '../../../../shared/widgets/async_value_widget.dart';
@@ -11,7 +12,6 @@ import '../../../../shared/widgets/greeting_header.dart';
 import '../../../../shared/widgets/open_drawer_button.dart';
 import '../../../../shared/widgets/pattern_card.dart';
 import '../../../../shared/widgets/person_avatar.dart';
-import '../../../../shared/widgets/status_badge.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../checkin/domain/entities/checkin_request.dart';
 import '../../../checkin/presentation/providers/checkin_providers.dart';
@@ -262,7 +262,7 @@ class _KidCard extends ConsumerWidget {
                 PersonAvatar(
                   name: child.fullName,
                   photo: child.photoUrl,
-                  radius: 30,
+                  radius: 32,
                 ),
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
@@ -271,6 +271,8 @@ class _KidCard extends ConsumerWidget {
                     children: [
                       Text(
                         child.displayName,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       Text(
@@ -280,13 +282,6 @@ class _KidCard extends ConsumerWidget {
                     ],
                   ),
                 ),
-                StatusBadge(
-                  label:
-                      present
-                          ? 'Na sala desde ${hhmm(presence.at)}'
-                          : 'Fora da sala',
-                  tone: present ? StatusTone.success : StatusTone.neutral,
-                ),
                 IconButton(
                   tooltip: 'Editar cadastro',
                   icon: const Icon(Icons.edit_outlined),
@@ -294,49 +289,83 @@ class _KidCard extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.sm),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                onPressed: () => context.push('/saude/${child.id}'),
-                icon: Icon(
-                  child.careAlert
-                      ? Icons.favorite
-                      : Icons.favorite_border,
-                  size: 18,
-                ),
-                label: Text(
-                  child.careAlert
-                      ? 'Saúde e cuidados (preenchido)'
-                      : 'Saúde e cuidados',
-                ),
+            const SizedBox(height: AppSpacing.md),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.sm + 2,
               ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            if (request != null)
-              Row(
+              decoration: BoxDecoration(
+                color:
+                    present
+                        ? AppColors.success.withValues(alpha: 0.12)
+                        : scheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
+              ),
+              child: Row(
                 children: [
-                  const Icon(Icons.hourglass_top, size: 18),
+                  Icon(
+                    present ? Icons.check_circle : Icons.meeting_room_outlined,
+                    size: 20,
+                    color:
+                        present ? AppColors.success : scheme.onSurfaceVariant,
+                  ),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Text(
-                      request!.isEntry
-                          ? 'Aguardando a recepção confirmar a entrada…'
-                          : 'Aguardando a equipe liberar a saída…',
+                      present
+                          ? 'Na sala desde ${hhmm(presence.at)}'
+                          : 'Fora da sala',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color:
+                            present
+                                ? AppColors.success
+                                : scheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
-                  TextButton(
-                    onPressed:
-                        () => ref
-                            .read(checkinRepositoryProvider)
-                            .cancelRequest(request!.id),
-                    child: const Text('Cancelar'),
-                  ),
                 ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            if (request != null)
+              Container(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  AppSpacing.xs,
+                  AppSpacing.xs,
+                  AppSpacing.xs,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.warning.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.hourglass_top, size: 20),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        request!.isEntry
+                            ? 'Aguardando a recepção confirmar a entrada…'
+                            : 'Aguardando a equipe liberar a saída…',
+                      ),
+                    ),
+                    TextButton(
+                      onPressed:
+                          () => ref
+                              .read(checkinRepositoryProvider)
+                              .cancelRequest(request!.id),
+                      child: const Text('Cancelar'),
+                    ),
+                  ],
+                ),
               )
             else
               SizedBox(
                 width: double.infinity,
+                height: 48,
                 child:
                     present
                         ? FilledButton.icon(
@@ -350,6 +379,23 @@ class _KidCard extends ConsumerWidget {
                           label: const Text('Estou chegando'),
                         ),
               ),
+            const SizedBox(height: AppSpacing.sm),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => context.push('/saude/${child.id}'),
+                icon: Icon(
+                  child.careAlert ? Icons.favorite : Icons.favorite_border,
+                  size: 18,
+                  color: child.careAlert ? AppColors.danger : null,
+                ),
+                label: Text(
+                  child.careAlert
+                      ? 'Saúde e cuidados · preenchido'
+                      : 'Saúde e cuidados',
+                ),
+              ),
+            ),
           ],
         ),
       ),

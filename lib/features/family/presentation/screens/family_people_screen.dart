@@ -46,7 +46,8 @@ class FamilyPeopleScreen extends ConsumerWidget {
             return const EmptyState(
               icon: Icons.verified_user_outlined,
               title: 'Nenhuma pessoa cadastrada',
-              message: 'Toque em "Adicionar pessoa" para incluir quem pode buscar.',
+              message:
+                  'Toque em "Adicionar pessoa" para incluir quem pode buscar.',
             );
           }
           final guardians = list.where((p) => p.kind == PersonKind.guardian);
@@ -78,55 +79,72 @@ class FamilyPeopleScreen extends ConsumerWidget {
     WidgetRef ref,
     Person p,
     List<Child> kids,
-  ) => ListTile(
-    contentPadding: EdgeInsets.zero,
-    leading: PersonAvatar(name: p.fullName),
-    title: Text(p.fullName),
-    subtitle: Text(
-      p.kind == PersonKind.authorized && p.validUntil != null
-          ? '${p.relation} · até ${shortDate(p.validUntil)}'
-          : p.relation,
-    ),
-    trailing: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        p.canPickUp
-            ? const StatusBadge(
-              label: 'Autorizado',
-              tone: StatusTone.success,
-              dense: true,
-            )
-            : const StatusBadge(
-              label: 'Vencido',
-              tone: StatusTone.danger,
-              dense: true,
+  ) => Card(
+    margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+    child: ListTile(
+      contentPadding: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.xs,
+        AppSpacing.xs,
+        AppSpacing.xs,
+      ),
+      leading: PersonAvatar(name: p.fullName, radius: 24),
+      title: Text(p.fullName, maxLines: 2, overflow: TextOverflow.ellipsis),
+      subtitle: Padding(
+        padding: const EdgeInsets.only(top: 2),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              p.kind == PersonKind.authorized && p.validUntil != null
+                  ? '${p.relation} · até ${shortDate(p.validUntil)}'
+                  : p.relation,
             ),
-        IconButton(
-          tooltip: 'Remover',
-          icon: const Icon(Icons.delete_outline),
-          onPressed: () async {
-            final user = ref.read(sessionProvider).user!;
-            final ok = await confirm(
-              context,
-              title: 'Remover ${p.fullName}?',
-              message: 'Essa pessoa deixa de poder buscar seus filhos.',
-              action: 'Remover',
-            );
-            if (!ok) return;
-            try {
-              await ref
-                  .read(familyRepositoryProvider)
-                  .removePerson(
-                    churchId: user.churchId,
-                    person: p,
-                    children: kids,
-                  );
-            } catch (e) {
-              if (context.mounted) showError(context, e);
-            }
-          },
+            const SizedBox(height: 6),
+            p.canPickUp
+                ? const StatusBadge(
+                  label: 'Autorizado a buscar',
+                  tone: StatusTone.success,
+                  dense: true,
+                )
+                : const StatusBadge(
+                  label: 'Autorização vencida',
+                  tone: StatusTone.danger,
+                  dense: true,
+                ),
+          ],
         ),
-      ],
+      ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            tooltip: 'Remover',
+            icon: const Icon(Icons.delete_outline),
+            onPressed: () async {
+              final user = ref.read(sessionProvider).user!;
+              final ok = await confirm(
+                context,
+                title: 'Remover ${p.fullName}?',
+                message: 'Essa pessoa deixa de poder buscar seus filhos.',
+                action: 'Remover',
+              );
+              if (!ok) return;
+              try {
+                await ref
+                    .read(familyRepositoryProvider)
+                    .removePerson(
+                      churchId: user.churchId,
+                      person: p,
+                      children: kids,
+                    );
+              } catch (e) {
+                if (context.mounted) showError(context, e);
+              }
+            },
+          ),
+        ],
+      ),
     ),
   );
 }
