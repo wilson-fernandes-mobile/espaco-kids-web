@@ -45,6 +45,8 @@ flutter_launcher_icons:
   ios: true
   remove_alpha_ios: true
   image_path: "assets/icon/ic_app.png"
+  adaptive_icon_background: "#287DCF"
+  adaptive_icon_foreground: "assets/icon/ic_app_foreground.png"
 
 flutter:
   uses-material-design: true
