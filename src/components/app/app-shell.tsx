@@ -63,7 +63,7 @@ const NAV_GROUPS: { title?: string; footer?: boolean; items: NavItem[] }[] = [
     ],
   },
   {
-    title: "No dia",
+    title: "Dia a dia",
     items: [
       {
         to: "/checkin",
