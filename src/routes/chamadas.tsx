@@ -129,10 +129,11 @@ function CallsPage() {
       <div className="mb-5 flex gap-3 rounded-xl border border-primary/20 bg-primary-soft/50 p-3 text-sm">
         <Info className="mt-0.5 size-4 shrink-0 text-primary" />
         <p>
-          As chamadas ficam registradas aqui. Enquanto o <strong>push</strong>{" "}
-          do aplicativo não existe, use o botão{" "}
+          As chamadas ficam registradas aqui e, ao criar uma, a família recebe
+          uma notificação <strong>push</strong> no aplicativo (se estiver com o
+          app instalado e logado). Se ela não responder, use o botão{" "}
           <strong>Chamar no WhatsApp</strong> (a mensagem sai pronta, sem o
-          motivo) ou ligue. Nada é enviado automaticamente pelo sistema.
+          motivo) ou ligue.
         </p>
       </div>
 
