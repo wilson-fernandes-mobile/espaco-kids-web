@@ -47,62 +47,91 @@ import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { aplicarTema } from "@/lib/tema";
 
-const NAV: {
+type NavItem = {
   to: string;
   label: string;
   icon: typeof Baby;
   perm: Permission;
-}[] = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard, perm: "dashboard" },
-  { to: "/criancas", label: "Crianças", icon: Baby, perm: "criancas" },
+};
+
+// Menu em grupos: o que se usa no dia do culto, os cadastros, a gestão e,
+// fixo no rodapé, a administração da igreja.
+const NAV_GROUPS: { title?: string; footer?: boolean; items: NavItem[] }[] = [
   {
-    to: "/familias",
-    label: "Famílias e responsáveis",
-    icon: Users,
-    perm: "familias",
+    items: [
+      { to: "/", label: "Dashboard", icon: LayoutDashboard, perm: "dashboard" },
+    ],
   },
   {
-    to: "/checkin",
-    label: "Check-in e check-out",
-    icon: ScanLine,
-    perm: "checkin",
-  },
-  { to: "/turmas", label: "Turmas e salas", icon: School, perm: "turmas" },
-  {
-    to: "/crachas",
-    label: "Crachás e QR Codes",
-    icon: QrCode,
-    perm: "crachas",
-  },
-  {
-    to: "/chamadas",
-    label: "Chamadas aos responsáveis",
-    icon: BellRing,
-    perm: "chamadas",
-  },
-  {
-    to: "/notificacoes",
-    label: "Notificações",
-    icon: Bell,
-    perm: "notificacoes",
+    title: "No dia",
+    items: [
+      {
+        to: "/checkin",
+        label: "Check-in e check-out",
+        icon: ScanLine,
+        perm: "checkin",
+      },
+      {
+        to: "/chamadas",
+        label: "Chamadas aos responsáveis",
+        icon: BellRing,
+        perm: "chamadas",
+      },
+      {
+        to: "/notificacoes",
+        label: "Notificações",
+        icon: Bell,
+        perm: "notificacoes",
+      },
+    ],
   },
   {
-    to: "/relatorios",
-    label: "Relatórios",
-    icon: BarChart3,
-    perm: "relatorios",
+    title: "Cadastros",
+    items: [
+      { to: "/criancas", label: "Crianças", icon: Baby, perm: "criancas" },
+      {
+        to: "/familias",
+        label: "Famílias e responsáveis",
+        icon: Users,
+        perm: "familias",
+      },
+      { to: "/turmas", label: "Turmas e salas", icon: School, perm: "turmas" },
+      {
+        to: "/crachas",
+        label: "Crachás e QR Codes",
+        icon: QrCode,
+        perm: "crachas",
+      },
+    ],
   },
   {
-    to: "/usuarios",
-    label: "Usuários e permissões",
-    icon: ShieldCheck,
-    perm: "usuarios",
+    title: "Gestão",
+    items: [
+      {
+        to: "/relatorios",
+        label: "Relatórios",
+        icon: BarChart3,
+        perm: "relatorios",
+      },
+    ],
   },
   {
-    to: "/configuracoes",
-    label: "Configurações da igreja",
-    icon: Settings,
-    perm: "configuracoes",
+    title: "Administração",
+    footer: true,
+    items: [
+      {
+        to: "/usuarios",
+        label: "Usuários e permissões",
+        icon: ShieldCheck,
+        perm: "usuarios",
+      },
+      {
+        to: "/configuracoes",
+        label: "Configurações da igreja",
+        icon: Settings,
+        perm: "configuracoes",
+      },
+    ],
   },
 ];
 
@@ -143,13 +172,8 @@ function SideNav({
           </p>
         </div>
       </div>
-      <nav
-        className={cn(
-          "flex-1 space-y-0.5 overflow-y-auto pb-4",
-          collapsed ? "px-2" : "px-3",
-        )}
-      >
-        {NAV.filter((n) => can(role, n.perm)).map((n) => {
+      {(() => {
+        const renderItem = (n: NavItem) => {
           const active = n.to === "/" ? path === "/" : path.startsWith(n.to);
           const link = (
             <Link
@@ -186,8 +210,46 @@ function SideNav({
               <TooltipContent side="right">{n.label}</TooltipContent>
             </Tooltip>
           );
-        })}
-      </nav>
+        };
+        const renderGroup = (g: (typeof NAV_GROUPS)[number], i: number) => {
+          const items = g.items.filter((n) => can(role, n.perm));
+          if (items.length === 0) return null;
+          return (
+            <div key={g.title ?? `g${i}`} className={cn(i > 0 && "mt-4")}>
+              {g.title &&
+                (collapsed ? (
+                  <div className="mx-3 mb-2 border-t" aria-hidden="true" />
+                ) : (
+                  <p className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    {g.title}
+                  </p>
+                ))}
+              <div className="space-y-0.5">{items.map(renderItem)}</div>
+            </div>
+          );
+        };
+        const main = NAV_GROUPS.filter((g) => !g.footer);
+        const foot = NAV_GROUPS.filter((g) => g.footer)
+          .map((g) => renderGroup(g, 0))
+          .filter(Boolean);
+        return (
+          <>
+            <nav
+              className={cn(
+                "flex-1 overflow-y-auto pb-4",
+                collapsed ? "px-2" : "px-3",
+              )}
+            >
+              {main.map(renderGroup)}
+            </nav>
+            {foot.length > 0 && (
+              <div className={cn("border-t py-3", collapsed ? "px-2" : "px-3")}>
+                {foot}
+              </div>
+            )}
+          </>
+        );
+      })()}
     </div>
   );
 }
