@@ -131,7 +131,12 @@ class FamilyRepository {
       'notes': draft.notes.trim(),
       'status': 'ativo',
       'guardianIds': guardians.docs.map((d) => d.id).toList(),
-      'authorizedIds': <String>[],
+      // O responsável principal já pode buscar a criança (como no cadastro do painel).
+      'authorizedIds':
+          guardians.docs
+              .where((d) => d.data()['primary'] == true)
+              .map((d) => d.id)
+              .toList(),
       'createdBy': uid,
       if (draft.photoUrl != null && draft.photoUrl!.isNotEmpty)
         'photoUrl': draft.photoUrl,
