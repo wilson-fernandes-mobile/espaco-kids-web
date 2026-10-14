@@ -14,6 +14,8 @@ import {
   Plus,
   UserPlus,
   Users,
+  ShieldCheck,
+  ShieldOff,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { can } from "@/lib/domain/rules";
@@ -465,7 +467,7 @@ function AuthorizedDialog({
 function FamiliesPage() {
   const { familia } = Route.useSearch();
   const nav = useNavigate();
-  const { state, role, loading } = useStore();
+  const { state, role, loading, toggleAuthorization } = useStore();
   const [q, setQ] = useState("");
   const [dlg, setDlg] = useState<null | {
     kind: "family" | "guardian" | "auth";
@@ -514,6 +516,42 @@ function FamiliesPage() {
     const guardians = state.guardians.filter((g) => g.familyId === fam.id);
     const authorized = state.authorized.filter((a) => a.familyId === fam.id);
     const kids = state.children.filter((c) => c.familyId === fam.id);
+    // Autoriza/revoga a retirada de TODAS as crianças da família para uma pessoa.
+    const PickupControl = ({ personId, name }: { personId: string; name: string }) => {
+      if (kids.length === 0) return null;
+      const n = kids.filter((k) => k.authorizedIds.includes(personId)).length;
+      const all = n === kids.length;
+      return (
+        <>
+          <StatusPill
+            value={n > 0 ? "ativo" : "inativo"}
+            label={
+              n === 0
+                ? "Não retira"
+                : all
+                  ? "Pode retirar"
+                  : `Retira ${n}/${kids.length}`
+            }
+          />
+          {canEdit && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                attempt(async () => {
+                  for (const k of kids)
+                    if (k.authorizedIds.includes(personId) === all)
+                      await toggleAuthorization(k.id, personId);
+                }, all ? `Retirada revogada para ${name}.` : `${name} pode retirar as crianças.`)
+              }
+            >
+              {all ? <ShieldOff /> : <ShieldCheck />}
+              {all ? "Revogar" : "Autorizar"}
+            </Button>
+          )}
+        </>
+      );
+    };
     return (
       <>
         <Button
@@ -612,6 +650,7 @@ function FamiliesPage() {
                     {!g.active && (
                       <StatusPill value="inativo" label="Inativo" />
                     )}
+                    <PickupControl personId={g.id} name={g.fullName} />
                     <WhatsAppButton
                       guardian={g}
                       size="icon"
@@ -677,6 +716,7 @@ function FamiliesPage() {
                           label={a.active ? "Vigente" : "Revogada"}
                         />
                       )}
+                      <PickupControl personId={a.id} name={a.fullName} />
                       {canEdit && (
                         <Button
                           variant="ghost"
