@@ -90,12 +90,8 @@ export function ChildForm({
         id: initial?.id,
         photoUrl: v.photoUrl || undefined,
         guardianIds: keepAuth ? initial!.guardianIds : guardianIds,
-        // Apenas o responsável principal é autorizado por padrão; demais precisam de autorização explícita.
-        authorizedIds: keepAuth
-          ? initial!.authorizedIds
-          : state.guardians
-              .filter((g) => g.familyId === v.familyId && g.primary)
-              .map((g) => g.id),
+        // Os responsáveis da família já podem retirar a criança; pessoas autorizadas de fora precisam de autorização explícita.
+        authorizedIds: keepAuth ? initial!.authorizedIds : guardianIds,
       });
       onSaved(c);
     } catch (e) {

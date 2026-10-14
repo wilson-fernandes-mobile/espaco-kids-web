@@ -468,7 +468,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         if (g.id) await updateDoc(tdoc("guardians", g.id), strip(g));
         else {
           const ref = await addDoc(tcol("guardians"), g);
-          // Vincula às crianças da família; autorização de retirada continua sendo decisão explícita.
+          // Vincula às crianças da família. Responsável já pode retirar a criança
+          // (a coordenação pode revogar na ficha); pessoa autorizada de fora é explícita.
           const kids = stateRef.current.children.filter(
             (k) => k.familyId === g.familyId,
           );
@@ -476,6 +477,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             kids.map((k) =>
               updateDoc(tdoc("children", k.id), {
                 guardianIds: [...new Set([...k.guardianIds, ref.id])],
+                authorizedIds: [...new Set([...k.authorizedIds, ref.id])],
               }),
             ),
           );
