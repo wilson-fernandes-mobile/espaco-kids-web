@@ -2,9 +2,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/services/local_preferences_service.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/feedback.dart';
 import '../providers/auth_providers.dart';
+import 'last_used_badge.dart';
 
 /// Entrar com Google (Android e iOS) e com Apple (só iOS/macOS, onde a
 /// Apple exige a opção quando há outro login social).
@@ -18,10 +20,11 @@ class SocialButtons extends ConsumerStatefulWidget {
 class _SocialButtonsState extends ConsumerState<SocialButtons> {
   bool _busy = false;
 
-  Future<void> _run(Future<bool> Function() action) async {
+  Future<void> _run(String method, Future<bool> Function() action) async {
     setState(() => _busy = true);
+    final prefs = ref.read(sharedPreferencesProvider);
     try {
-      await action();
+      if (await action()) await prefs.setString(lastLoginMethodKey, method);
     } catch (e) {
       if (mounted) showError(context, e);
     } finally {
@@ -32,6 +35,9 @@ class _SocialButtonsState extends ConsumerState<SocialButtons> {
   @override
   Widget build(BuildContext context) {
     final repo = ref.read(authRepositoryProvider);
+    final last = ref
+        .read(sharedPreferencesProvider)
+        .getString(lastLoginMethodKey);
     final apple =
         defaultTargetPlatform == TargetPlatform.iOS ||
         defaultTargetPlatform == TargetPlatform.macOS;
@@ -48,25 +54,33 @@ class _SocialButtonsState extends ConsumerState<SocialButtons> {
           ],
         ),
         const SizedBox(height: AppSpacing.md),
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: _busy ? null : () => _run(repo.signInWithGoogle),
-            icon: const Text(
-              'G',
-              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+        LastUsedBadge(
+          show: last == 'google',
+          child: SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed:
+                  _busy ? null : () => _run('google', repo.signInWithGoogle),
+              icon: const Text(
+                'G',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+              ),
+              label: const Text('Continuar com Google'),
             ),
-            label: const Text('Continuar com Google'),
           ),
         ),
         if (apple) ...[
-          const SizedBox(height: AppSpacing.sm),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: _busy ? null : () => _run(repo.signInWithApple),
-              icon: const Icon(Icons.apple),
-              label: const Text('Continuar com Apple'),
+          const SizedBox(height: AppSpacing.md),
+          LastUsedBadge(
+            show: last == 'apple',
+            child: SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed:
+                    _busy ? null : () => _run('apple', repo.signInWithApple),
+                icon: const Icon(Icons.apple),
+                label: const Text('Continuar com Apple'),
+              ),
             ),
           ),
         ],

@@ -7,6 +7,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/feedback.dart';
 import '../providers/auth_providers.dart';
 import '../widgets/auth_background.dart';
+import '../widgets/last_used_badge.dart';
 import '../widgets/logo_header.dart';
 import '../widgets/social_buttons.dart';
 
@@ -49,6 +50,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     try {
       await ref.read(authRepositoryProvider).signIn(email, _password.text);
       await prefs.setString(_lastEmailKey, email);
+      await prefs.setString(lastLoginMethodKey, 'email');
     } catch (e) {
       if (mounted) showError(context, e);
     } finally {
@@ -73,6 +75,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lastMethod = ref
+        .read(sharedPreferencesProvider)
+        .getString(lastLoginMethodKey);
     return Scaffold(
       body: AuthBackground(
         child: SafeArea(
@@ -129,20 +134,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: AppSpacing.sm),
-                      SizedBox(
-                        width: double.infinity,
-                        child: FilledButton(
-                          onPressed: _busy ? null : _submit,
-                          child:
-                              _busy
-                                  ? const SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                  : const Text('Entrar'),
+                      LastUsedBadge(
+                        show: lastMethod == 'email',
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: FilledButton(
+                            onPressed: _busy ? null : _submit,
+                            child:
+                                _busy
+                                    ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                    : const Text('Entrar'),
+                          ),
                         ),
                       ),
                       const SizedBox(height: AppSpacing.sm),

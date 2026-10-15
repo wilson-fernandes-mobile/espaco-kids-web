@@ -29,7 +29,14 @@ final profileProvider = StreamProvider<AppUser?>((ref) {
 ///
 /// * `needsChurch`: logado, mas sem igreja ativa (nenhuma, ou várias e
 ///   nenhuma escolhida) — vai para a tela de escolher/entrar numa igreja.
-enum SessionStatus { loading, signedOut, needsChurch, noProfile, inactive, ready }
+enum SessionStatus {
+  loading,
+  signedOut,
+  needsChurch,
+  noProfile,
+  inactive,
+  ready,
+}
 
 class Session {
   const Session(this.status, [this.user]);
