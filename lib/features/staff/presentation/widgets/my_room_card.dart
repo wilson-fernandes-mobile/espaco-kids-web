@@ -43,6 +43,66 @@ Future<void> leaveRoom(BuildContext context, WidgetRef ref) async {
   }
 }
 
+/// Como fazer o check-in: ler a etiqueta (QR Code) da sala ou escolher a
+/// turma numa lista, sem QR.
+Future<void> chooseCheckInMethod(BuildContext context, WidgetRef ref) async {
+  final scheme = Theme.of(context).colorScheme;
+  final choice = await showModalBottomSheet<String>(
+    context: context,
+    showDragHandle: true,
+    builder:
+        (ctx) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              0,
+              AppSpacing.md,
+              AppSpacing.md,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Check-in na turma',
+                  style: Theme.of(ctx).textTheme.titleLarge,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Card(
+                  margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+                  child: ListTile(
+                    leading: Icon(Icons.qr_code_scanner, color: scheme.primary),
+                    title: const Text('Ler etiqueta (QR Code)'),
+                    subtitle: const Text(
+                      'Aponte a câmera para a etiqueta da porta',
+                    ),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => Navigator.pop(ctx, 'qr'),
+                  ),
+                ),
+                Card(
+                  margin: EdgeInsets.zero,
+                  child: ListTile(
+                    leading: Icon(Icons.list_alt, color: scheme.primary),
+                    title: const Text('Escolher na lista'),
+                    subtitle: const Text('Sem QR Code: selecione a turma'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => Navigator.pop(ctx, 'lista'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+  );
+  if (!context.mounted || choice == null) return;
+  if (choice == 'qr') {
+    context.go('/ler');
+  } else {
+    await pickRoom(context, ref);
+  }
+}
+
 /// Escolher a sala (lista das turmas ativas).
 Future<void> pickRoom(BuildContext context, WidgetRef ref) async {
   final classes =
@@ -176,24 +236,21 @@ class MyRoomCard extends ConsumerWidget {
               children: [
                 Expanded(
                   child: FilledButton.icon(
-                    onPressed: () => pickRoom(context, ref),
+                    onPressed: () => chooseCheckInMethod(context, ref),
                     icon: Icon(inRoom ? Icons.swap_horiz : Icons.login),
-                    label: Text(inRoom ? 'Trocar de sala' : 'Entrar numa sala'),
+                    label: Text(
+                      inRoom ? 'Trocar de turma' : 'Fazer check-in na turma',
+                    ),
                   ),
                 ),
-                const SizedBox(width: AppSpacing.sm),
-                if (inRoom)
+                if (inRoom) ...[
+                  const SizedBox(width: AppSpacing.sm),
                   OutlinedButton.icon(
                     onPressed: () => leaveRoom(context, ref),
                     icon: const Icon(Icons.logout),
                     label: const Text('Sair'),
-                  )
-                else
-                  OutlinedButton.icon(
-                    onPressed: () => context.go('/ler'),
-                    icon: const Icon(Icons.qr_code_scanner),
-                    label: const Text('Etiqueta'),
                   ),
+                ],
               ],
             ),
           ],
