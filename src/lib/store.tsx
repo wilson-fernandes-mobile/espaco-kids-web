@@ -648,6 +648,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           reason,
           note: note ?? "",
           requestedBy: currentUser,
+          // Quem chamou: recebe push quando a família avisa que está indo.
+          requestedById: uid,
           createdAt: now(),
           status: "pendente",
           history: [{ status: "pendente", at: now() }],

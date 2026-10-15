@@ -52,6 +52,47 @@ export const Route = createFileRoute("/chamadas")({
 });
 
 const OPEN = ["pendente", "enviada", "recebida", "visualizada"];
+
+type Period = "hoje" | "7d" | "mes" | "mes-ant" | "custom";
+const PERIODS: { id: Period; label: string }[] = [
+  { id: "hoje", label: "Hoje" },
+  { id: "7d", label: "7 dias" },
+  { id: "mes", label: "Este mês" },
+  { id: "mes-ant", label: "Mês anterior" },
+  { id: "custom", label: "Escolher período" },
+];
+const isoDay = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const fmtDay = (d: Date) =>
+  d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+
+/** Intervalo [início, fim) do período escolhido, em horário local. */
+function rangeOf(period: Period, from: string, to: string): [Date, Date] {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const next = (d: Date, n = 1) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+  switch (period) {
+    case "hoje":
+      return [today, next(today)];
+    case "7d":
+      return [next(today, -6), next(today)];
+    case "mes-ant":
+      return [
+        new Date(today.getFullYear(), today.getMonth() - 1, 1),
+        new Date(today.getFullYear(), today.getMonth(), 1),
+      ];
+    case "custom": {
+      const a = from ? new Date(`${from}T00:00:00`) : today;
+      const b = to ? new Date(`${to}T00:00:00`) : a;
+      return a <= b ? [a, next(b)] : [b, next(a)];
+    }
+    default:
+      return [
+        new Date(today.getFullYear(), today.getMonth(), 1),
+        new Date(today.getFullYear(), today.getMonth() + 1, 1),
+      ];
+  }
+}
 const NEXT: Partial<Record<GuardianCall["status"], GuardianCall["status"]>> = {
   pendente: "enviada",
   enviada: "recebida",
@@ -61,7 +102,11 @@ const NEXT: Partial<Record<GuardianCall["status"], GuardianCall["status"]>> = {
 function CallsPage() {
   const { state, role, loading, openCall, setCallStatus } = useStore();
   const { profile } = useAuth();
-  const [view, setView] = useState<"ativas" | "todas">("ativas");
+  // Abre em "Todas" no mês atual; "Em aberto" mostra tudo que ainda precisa de ação.
+  const [view, setView] = useState<"ativas" | "todas">("todas");
+  const [period, setPeriod] = useState<Period>("mes");
+  const [from, setFrom] = useState(() => isoDay(new Date()));
+  const [to, setTo] = useState(() => isoDay(new Date()));
   const [target, setTarget] = useState<Child | null>(null);
   const [reason, setReason] = useState<CallReason>("atendimento");
   const [note, setNote] = useState("");
@@ -82,9 +127,12 @@ function CallsPage() {
     [state, myClasses?.join(",")],
   );
   const calls = useMemo(() => {
-    const list = state.calls.filter(
-      (c) => view === "todas" || OPEN.includes(c.status),
-    );
+    const [start, end] = rangeOf(period, from, to);
+    const list = state.calls.filter((c) => {
+      if (view === "ativas") return OPEN.includes(c.status);
+      const at = Date.parse(c.createdAt);
+      return at >= start.getTime() && at < end.getTime();
+    });
     // Professor: solicitações da própria turma primeiro; coordenação vê todas.
     return [...list].sort(
       (a, b) =>
@@ -92,7 +140,7 @@ function CallsPage() {
         b.createdAt.localeCompare(a.createdAt),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.calls, view, myClasses?.join(",")]);
+  }, [state.calls, view, period, from, to, myClasses?.join(",")]);
 
   if (!can(role, "chamadas")) return <Restricted />;
   if (loading) return <PageLoading />;
@@ -201,16 +249,71 @@ function CallsPage() {
               </TabsList>
             </Tabs>
           </header>
+          {view === "todas" && (
+            <div className="space-y-2 border-b px-5 py-3">
+              <div className="flex flex-wrap gap-2">
+                {PERIODS.map((p) => (
+                  <Button
+                    key={p.id}
+                    size="sm"
+                    variant={period === p.id ? "default" : "outline"}
+                    onClick={() => setPeriod(p.id)}
+                  >
+                    {p.label}
+                  </Button>
+                ))}
+              </div>
+              {period === "custom" && (
+                <div className="flex flex-wrap items-center gap-2 text-sm">
+                  <Label htmlFor="de">De</Label>
+                  <input
+                    id="de"
+                    type="date"
+                    className={selectCls + " h-9 w-auto"}
+                    value={from}
+                    max={isoDay(new Date())}
+                    onChange={(e) => setFrom(e.target.value)}
+                  />
+                  <Label htmlFor="ate">até</Label>
+                  <input
+                    id="ate"
+                    type="date"
+                    className={selectCls + " h-9 w-auto"}
+                    value={to}
+                    max={isoDay(new Date())}
+                    onChange={(e) => setTo(e.target.value)}
+                  />
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">
+                {(() => {
+                  const [a, b] = rangeOf(period, from, to);
+                  const last = new Date(b.getFullYear(), b.getMonth(), b.getDate() - 1);
+                  return `${fmtDay(a)} a ${fmtDay(last)}`;
+                })()}{" "}
+                · {calls.length} {calls.length === 1 ? "chamada" : "chamadas"}
+              </p>
+            </div>
+          )}
+          {view === "ativas" && (
+            <p className="border-b px-5 py-2 text-xs text-muted-foreground">
+              Todas as chamadas ainda em aberto, de qualquer data.
+            </p>
+          )}
           <div className="p-5">
             {calls.length === 0 ? (
               <EmptyState
                 icon={Siren}
-                title="Nenhuma chamada"
-                text="Quando um professor solicitar um responsável, aparecerá aqui."
+                title={view === "todas" ? "Nenhuma chamada no período" : "Nenhuma chamada"}
+                text={
+                  view === "todas"
+                    ? "Tente outro período."
+                    : "Quando um professor solicitar um responsável, aparecerá aqui."
+                }
               />
             ) : (
               <ul className="space-y-3">
-                {calls.slice(0, 50).map((c) => {
+                {calls.slice(0, 200).map((c) => {
                   const k = child(c.childId);
                   const open = OPEN.includes(c.status);
                   const guardians = k
@@ -232,8 +335,17 @@ function CallsPage() {
                             </p>
                             <p className="text-xs text-muted-foreground">
                               {clsName(c.classId)} • {CALL_REASON[c.reason]} •{" "}
-                              {c.requestedBy} • {ago(c.createdAt)}
+                              {ago(c.createdAt)}
                             </p>
+                            {c.requestedBy && (
+                              <p className="text-xs text-muted-foreground">
+                                Chamado por{" "}
+                                <strong className="font-semibold text-foreground">
+                                  {c.requestedBy}
+                                </strong>{" "}
+                                · {dateTime(c.createdAt)}
+                              </p>
+                            )}
                           </div>
                         </div>
                         <StatusPill
