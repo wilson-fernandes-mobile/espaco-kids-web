@@ -204,6 +204,7 @@ function ClassesPage() {
   const [edit, setEdit] = useState<ClassRoom | "new" | null>(null);
   const [view, setView] = useState<ClassRoom | null>(null);
   const [tag, setTag] = useState<ClassRoom | null>(null);
+  const [printAll, setPrintAll] = useState(false);
   const { churchId, churchName } = useAuth();
   if (!can(role, "turmas")) return <Restricted />;
   if (loading) return <PageLoading />;
@@ -217,9 +218,25 @@ function ClassesPage() {
         description="Ocupação em tempo real e configuração dos ambientes."
         actions={
           manage && (
-            <Button onClick={() => setEdit("new")}>
-              <Plus /> Nova turma
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                disabled={!churchId || state.classes.every((c) => !c.active)}
+                onClick={() => {
+                  setPrintAll(true);
+                  // aguarda a área de impressão renderizar
+                  setTimeout(() => {
+                    window.print();
+                    setPrintAll(false);
+                  }, 200);
+                }}
+              >
+                <QrCode /> Etiquetas das salas
+              </Button>
+              <Button onClick={() => setEdit("new")}>
+                <Plus /> Nova turma
+              </Button>
+            </div>
           )
         }
       />
@@ -385,13 +402,22 @@ function ClassesPage() {
         </DialogContent>
       </Dialog>
       <div className="print-only">
-        {tag && churchId && (
-          <RoomTag
-            cls={tag}
-            churchId={churchId}
-            churchName={churchName ?? undefined}
-          />
-        )}
+        <div className="print-sheet">
+          {churchId &&
+            (printAll
+              ? state.classes.filter((c) => c.active)
+              : tag
+                ? [tag]
+                : []
+            ).map((c) => (
+              <RoomTag
+                key={c.id}
+                cls={c}
+                churchId={churchId}
+                churchName={churchName ?? undefined}
+              />
+            ))}
+        </div>
       </div>
       <Sheet open={!!view} onOpenChange={(o) => !o && setView(null)}>
         <SheetContent className="w-full sm:max-w-md">
