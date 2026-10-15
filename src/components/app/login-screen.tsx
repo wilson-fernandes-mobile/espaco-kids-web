@@ -287,6 +287,105 @@ const SubmitBtn = ({
   </Button>
 );
 
+const LAST_LOGIN_KEY = "ek-last-login";
+const readLast = () => {
+  try {
+    return localStorage.getItem(LAST_LOGIN_KEY);
+  } catch {
+    return null;
+  }
+};
+const saveLast = (m: string) => {
+  try {
+    localStorage.setItem(LAST_LOGIN_KEY, m);
+  } catch {
+    /* sem acesso ao storage */
+  }
+};
+
+/** Selo "Último uso" no canto do botão usado no último login. */
+function LastUsed({ show, children }: { show: boolean; children: ReactNode }) {
+  return (
+    <div className="relative">
+      {children}
+      {show && (
+        <span className="pointer-events-none absolute -top-2.5 right-3 inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-primary-foreground shadow">
+          Último uso
+        </span>
+      )}
+    </div>
+  );
+}
+
+const GoogleIcon = () => (
+  <svg viewBox="0 0 24 24" className="size-5" aria-hidden="true">
+    <path fill="#4285F4" d="M23.5 12.27c0-.85-.08-1.67-.22-2.45H12v4.64h6.45a5.52 5.52 0 0 1-2.4 3.62v3h3.88c2.27-2.09 3.57-5.17 3.57-8.81z" />
+    <path fill="#34A853" d="M12 24c3.24 0 5.96-1.07 7.95-2.91l-3.88-3c-1.07.72-2.45 1.15-4.07 1.15-3.13 0-5.78-2.11-6.73-4.96H1.27v3.1A12 12 0 0 0 12 24z" />
+    <path fill="#FBBC05" d="M5.27 14.28a7.2 7.2 0 0 1 0-4.56v-3.1H1.27a12 12 0 0 0 0 10.76l4-3.1z" />
+    <path fill="#EA4335" d="M12 4.77c1.76 0 3.34.61 4.59 1.8l3.44-3.44A11.5 11.5 0 0 0 12 0 12 12 0 0 0 1.27 6.62l4 3.1C6.22 6.88 8.87 4.77 12 4.77z" />
+  </svg>
+);
+const AppleIcon = () => (
+  <svg viewBox="0 0 24 24" className="size-5" fill="currentColor" aria-hidden="true">
+    <path d="M16.37 12.63c-.03-2.7 2.2-4 2.3-4.06-1.25-1.83-3.2-2.08-3.9-2.11-1.66-.17-3.24.98-4.08.98-.85 0-2.14-.96-3.52-.93-1.81.03-3.48 1.05-4.41 2.67-1.88 3.26-.48 8.09 1.35 10.74.9 1.3 1.96 2.76 3.36 2.7 1.35-.05 1.86-.87 3.49-.87 1.63 0 2.09.87 3.52.84 1.45-.03 2.37-1.32 3.26-2.62a11.6 11.6 0 0 0 1.48-3.03c-.03-.01-2.83-1.09-2.86-4.31zM13.7 4.62c.74-.9 1.24-2.15 1.1-3.4-1.07.04-2.36.71-3.13 1.61-.69.79-1.29 2.06-1.13 3.28 1.19.09 2.4-.6 3.16-1.49z" />
+  </svg>
+);
+
+/** Entrar com Google / Apple (a mesma conta vale para o app). */
+function SocialLogin({ onError }: { onError: (m: string | null) => void }) {
+  const { signInWithGoogle, signInWithApple } = useAuth();
+  const [busy, setBusy] = useState<"google" | "apple" | null>(null);
+  const last = readLast();
+  const go = async (m: "google" | "apple", fn: () => Promise<void>) => {
+    onError(null);
+    setBusy(m);
+    try {
+      await fn();
+      saveLast(m);
+    } catch (e) {
+      onError(authErrorMessage(e));
+    } finally {
+      setBusy(null);
+    }
+  };
+  return (
+    <div className="space-y-3">
+      <div className="relative py-1 text-center text-xs text-muted-foreground">
+        <span className="relative z-10 bg-background px-3">ou continue com</span>
+        <div className="absolute inset-x-0 top-1/2 border-t" />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <LastUsed show={last === "google"}>
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            className="h-11 w-full"
+            disabled={busy !== null}
+            onClick={() => go("google", signInWithGoogle)}
+          >
+            {busy === "google" ? <Loader2 className="animate-spin" /> : <GoogleIcon />}
+            Google
+          </Button>
+        </LastUsed>
+        <LastUsed show={last === "apple"}>
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            className="h-11 w-full"
+            disabled={busy !== null}
+            onClick={() => go("apple", signInWithApple)}
+          >
+            {busy === "apple" ? <Loader2 className="animate-spin" /> : <AppleIcon />}
+            Apple
+          </Button>
+        </LastUsed>
+      </div>
+    </div>
+  );
+}
+
 export function LoginScreen() {
   const { signIn, resetPassword, configured } = useAuth();
   const [mode, setMode] = useState<"login" | "reset">("login");
@@ -328,7 +427,10 @@ export function LoginScreen() {
       {mode === "login" ? (
         <form
           onSubmit={login.handleSubmit((v) =>
-            run(() => signIn(v.email, v.password)),
+            run(async () => {
+              await signIn(v.email, v.password);
+              saveLast("email");
+            }),
           )}
           className="space-y-5"
           noValidate
@@ -374,7 +476,10 @@ export function LoginScreen() {
             }
           />
           <FormError msg={formError} />
-          <SubmitBtn busy={login.formState.isSubmitting}>Entrar</SubmitBtn>
+          <LastUsed show={readLast() === "email"}>
+            <SubmitBtn busy={login.formState.isSubmitting}>Entrar</SubmitBtn>
+          </LastUsed>
+          <SocialLogin onError={setFormError} />
           <div className="relative py-1 text-center text-xs text-muted-foreground">
             <span className="relative z-10 bg-background px-3">
               ainda não tem acesso?

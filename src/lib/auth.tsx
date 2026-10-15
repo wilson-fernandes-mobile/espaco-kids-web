@@ -16,9 +16,12 @@ import {
 import {
   createUserWithEmailAndPassword,
   deleteUser,
+  GoogleAuthProvider,
+  OAuthProvider,
   onAuthStateChanged,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
+  signInWithPopup,
   signOut as fbSignOut,
   updateProfile,
   type User,
@@ -69,6 +72,9 @@ interface AuthCtx {
   openChurchPicker: () => void;
   configured: boolean;
   signIn: (email: string, password: string) => Promise<void>;
+  /** Entra (ou cria a conta) com Google/Apple. Quem ainda nao tem igreja cai na tela "Suas igrejas". */
+  signInWithGoogle: () => Promise<void>;
+  signInWithApple: () => Promise<void>;
   /** Cria a conta e uma igreja nova, da qual a pessoa é administradora. */
   bootstrapAdmin: (
     churchName: string,
@@ -116,6 +122,14 @@ export function authErrorMessage(e: unknown): string {
     "auth/network-request-failed": "Sem conexão com a internet.",
     "auth/operation-not-allowed":
       "Login por e-mail/senha não está habilitado no Firebase (Authentication → Método de login).",
+    "auth/account-exists-with-different-credential":
+      "Este e-mail já tem conta com outra forma de entrar. Entre com ela (e-mail e senha) e vincule esta em Perfil → Contas vinculadas no app.",
+    "auth/popup-blocked":
+      "O navegador bloqueou a janela de login. Libere pop-ups para este site e tente de novo.",
+    "auth/unauthorized-domain":
+      "Este endereço não está autorizado no Firebase (Authentication → Configurações → Domínios autorizados).",
+    "auth/operation-not-supported-in-this-environment":
+      "Este navegador não suporta o login por janela. Use e-mail e senha.",
     "permission-denied": "Sem permissão para esta operação.",
   };
   return (
@@ -380,6 +394,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signInWithEmailAndPassword(auth(), email.trim(), password);
   }, []);
 
+  /** Login social por janela (popup). Fechar a janela nao e erro. */
+  const socialSignIn = useCallback(
+    async (provider: GoogleAuthProvider | OAuthProvider) => {
+      try {
+        const cred = await signInWithPopup(auth(), provider);
+        const u = cred.user;
+        await ensureUserDoc(
+          u.uid,
+          u.displayName ?? u.email ?? "Sem nome",
+          u.email ?? "",
+        ).catch(() => undefined);
+      } catch (e) {
+        const code = (e as { code?: string })?.code;
+        if (
+          code === "auth/popup-closed-by-user" ||
+          code === "auth/cancelled-popup-request"
+        )
+          return;
+        throw e;
+      }
+    },
+    [],
+  );
+  const signInWithGoogle = useCallback(async () => {
+    const p = new GoogleAuthProvider();
+    p.setCustomParameters({ prompt: "select_account" });
+    await socialSignIn(p);
+  }, [socialSignIn]);
+  const signInWithApple = useCallback(async () => {
+    const p = new OAuthProvider("apple.com");
+    p.addScope("email");
+    p.addScope("name");
+    await socialSignIn(p);
+  }, [socialSignIn]);
+
   const bootstrapAdmin = useCallback(
     async (
       churchName: string,
@@ -529,6 +578,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       openChurchPicker,
       configured: firebaseConfigured,
       signIn,
+      signInWithGoogle,
+      signInWithApple,
       bootstrapAdmin,
       createChurch,
       joinWithCode,
@@ -547,6 +598,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       selectChurch,
       openChurchPicker,
       signIn,
+      signInWithGoogle,
+      signInWithApple,
       bootstrapAdmin,
       createChurch,
       joinWithCode,
