@@ -113,6 +113,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                   ? 'Código da igreja ou da família'
                                   : 'Código de convite',
                           hintText: family ? 'IG-XXXXXX' : 'KIDS-XXXXXX',
+                          helperMaxLines: 4,
                           helperText:
                               family
                                   ? 'IG-… com a equipe da igreja, ou LK-… de quem já cadastrou a família'

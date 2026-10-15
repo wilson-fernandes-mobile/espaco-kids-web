@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// Marca do Espaço Kids desenhada em código (sem imagem): quadrado
-/// arredondado com o gradiente do tema e o ícone de criança.
+/// Logo do app Espaço Kids (a casinha com as crianças, a mesma do ícone do
+/// aplicativo): quadrado arredondado com uma sombra suave.
 class KidsLogo extends StatelessWidget {
   const KidsLogo({super.key, this.size = 88});
 
@@ -14,12 +14,7 @@ class KidsLogo extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(size * 0.28),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [scheme.primary, scheme.secondary],
-        ),
+        borderRadius: BorderRadius.circular(size * 0.24),
         boxShadow: [
           BoxShadow(
             color: scheme.primary.withValues(alpha: 0.3),
@@ -28,7 +23,10 @@ class KidsLogo extends StatelessWidget {
           ),
         ],
       ),
-      child: Icon(Icons.child_care, size: size * 0.56, color: Colors.white),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(size * 0.24),
+        child: Image.asset('assets/icon/ic_app.png', fit: BoxFit.cover),
+      ),
     );
   }
 }
