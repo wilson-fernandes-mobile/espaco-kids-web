@@ -21,6 +21,7 @@ import '../../../checkin/presentation/providers/checkin_providers.dart';
 import '../../../kids/domain/entities/child.dart';
 import '../../../kids/presentation/providers/kids_providers.dart';
 import '../widgets/my_room_card.dart';
+import '../widgets/team_by_room.dart';
 
 /// Painel da equipe: ocupação, chamadas abertas e pedidos das famílias.
 class StaffHomeScreen extends ConsumerWidget {
@@ -162,6 +163,8 @@ class StaffHomeScreen extends ConsumerWidget {
                 canConfirm: user.role.canCheckInOut,
               ),
           ],
+          const SizedBox(height: AppSpacing.lg),
+          const TeamByRoom(),
           const SizedBox(height: AppSpacing.lg),
           const FormSectionHeader(
             icon: Icons.meeting_room_outlined,
