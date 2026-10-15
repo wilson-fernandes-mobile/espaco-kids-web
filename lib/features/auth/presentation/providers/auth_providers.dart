@@ -17,6 +17,12 @@ final authStateProvider = StreamProvider<User?>(
   (ref) => ref.watch(authRepositoryProvider).authChanges(),
 );
 
+/// Formas de entrar vinculadas à conta atual (`password`, `google.com`,
+/// `apple.com`); atualiza ao vincular/desvincular.
+final linkedProvidersProvider = StreamProvider<List<String>>(
+  (ref) => ref.watch(authRepositoryProvider).linkedProviders(),
+);
+
 /// Perfil (papel, turmas, família) da pessoa NA igreja ativa.
 final profileProvider = StreamProvider<AppUser?>((ref) {
   final user = ref.watch(authStateProvider).valueOrNull;

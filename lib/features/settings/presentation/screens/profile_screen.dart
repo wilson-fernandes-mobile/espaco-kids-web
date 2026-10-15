@@ -10,6 +10,7 @@ import '../../../../core/theme/theme_mode_provider.dart';
 import '../../../../shared/widgets/feedback.dart';
 import '../../../../shared/widgets/photo_field.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../widgets/linked_accounts_section.dart';
 
 /// Perfil, aparência (tema/cor) e sair — compartilhado por todos os papéis.
 class ProfileScreen extends ConsumerWidget {
@@ -93,6 +94,8 @@ class ProfileScreen extends ConsumerWidget {
                 ),
             ],
           ),
+          const SizedBox(height: AppSpacing.xl),
+          const LinkedAccountsSection(),
           const SizedBox(height: AppSpacing.xl),
           OutlinedButton.icon(
             onPressed: () async {

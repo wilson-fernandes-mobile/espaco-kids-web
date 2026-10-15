@@ -35,6 +35,18 @@ class AuthRepository {
 
   /// Entra (ou cria a conta) com Google. Retorna false se a pessoa cancelou.
   Future<bool> signInWithGoogle() async {
+    final cred = await _googleCredential();
+    if (cred == null) return false;
+    try {
+      await _auth.signInWithCredential(cred);
+    } on FirebaseAuthException catch (e) {
+      throw _friendly(e);
+    }
+    return true;
+  }
+
+  /// Credencial do Google (abre a escolha de conta); null se cancelou.
+  Future<AuthCredential?> _googleCredential() async {
     final google = GoogleSignIn(
       scopes: const ['email'],
       serverClientId: _googleServerClientId,
@@ -44,14 +56,123 @@ class AuthRepository {
               : null,
     );
     final account = await google.signIn();
-    if (account == null) return false;
+    if (account == null) return null;
     final tokens = await account.authentication;
-    final cred = GoogleAuthProvider.credential(
+    return GoogleAuthProvider.credential(
       idToken: tokens.idToken,
       accessToken: tokens.accessToken,
     );
-    await _auth.signInWithCredential(cred);
+  }
+
+  // ---- Contas vinculadas (Google, Apple e e-mail/senha na MESMA conta) ----
+
+  /// Provedores de login da conta atual: `password`, `google.com`, `apple.com`.
+  List<String> get linkedProviderIds =>
+      _auth.currentUser?.providerData.map((i) => i.providerId).toList() ??
+      const [];
+
+  /// Emite a lista de provedores sempre que a conta muda (vincular/desvincular).
+  Stream<List<String>> linkedProviders() => _auth.userChanges().map(
+    (u) => u?.providerData.map((i) => i.providerId).toList() ?? const [],
+  );
+
+  /// Vincula o Google à conta logada (não cria outra conta). false = cancelou.
+  Future<bool> linkGoogle() async {
+    final user = _auth.currentUser;
+    if (user == null) throw const Failure('Entre na sua conta primeiro.');
+    final cred = await _googleCredential();
+    if (cred == null) return false;
+    try {
+      await user.linkWithCredential(cred);
+    } on FirebaseAuthException catch (e) {
+      throw _friendly(e, linking: true);
+    }
     return true;
+  }
+
+  /// Vincula a Apple à conta logada. false = cancelou.
+  Future<bool> linkApple() async {
+    final user = _auth.currentUser;
+    if (user == null) throw const Failure('Entre na sua conta primeiro.');
+    try {
+      // Fluxo nativo do firebase_auth: cuida do nonce e evita o
+      // `invalid-credential` conhecido ao vincular com credencial montada à mão.
+      await user.linkWithProvider(
+        OAuthProvider('apple.com')
+          ..addScope('email')
+          ..addScope('name'),
+      );
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'canceled' || e.code == 'unknown') return false;
+      throw _friendly(e, linking: true);
+    }
+    return true;
+  }
+
+  /// Adiciona e-mail e senha como forma de entrar na conta logada.
+  Future<void> linkEmailPassword(String email, String password) async {
+    final user = _auth.currentUser;
+    if (user == null) throw const Failure('Entre na sua conta primeiro.');
+    try {
+      await user.linkWithCredential(
+        EmailAuthProvider.credential(email: email.trim(), password: password),
+      );
+    } on FirebaseAuthException catch (e) {
+      throw _friendly(e, linking: true);
+    }
+  }
+
+  /// Remove uma forma de entrar (só deve ser chamada se sobrar outra).
+  Future<void> unlinkProvider(String providerId) async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+    if (user.providerData.length < 2) {
+      throw const Failure('Mantenha pelo menos uma forma de entrar na conta.');
+    }
+    try {
+      await user.unlink(providerId);
+    } on FirebaseAuthException catch (e) {
+      throw _friendly(e);
+    }
+    // Sem isto o Google continuaria escolhendo a conta antiga automaticamente.
+    if (providerId == 'google.com') {
+      try {
+        await GoogleSignIn().signOut();
+      } catch (_) {}
+    }
+  }
+
+  Failure _friendly(FirebaseAuthException e, {bool linking = false}) {
+    switch (e.code) {
+      case 'account-exists-with-different-credential':
+        return const Failure(
+          'Este e-mail já tem conta com outra forma de entrar. Entre com ela '
+          'e vincule esta em Perfil → Contas vinculadas.',
+        );
+      case 'credential-already-in-use':
+        return const Failure(
+          'Esta conta já está vinculada a outro usuário. Entre nela direto, '
+          'ou use outra.',
+        );
+      case 'provider-already-linked':
+        return const Failure('Esta forma de entrar já está vinculada.');
+      case 'email-already-in-use':
+        return const Failure('Este e-mail já está em uso por outra conta.');
+      case 'weak-password':
+        return const Failure('Escolha uma senha com pelo menos 6 caracteres.');
+      case 'requires-recent-login':
+        return const Failure(
+          'Por segurança, saia e entre de novo antes de repetir esta ação.',
+        );
+      case 'no-such-provider':
+        return const Failure('Esta forma de entrar não está vinculada.');
+      default:
+        return Failure(
+          linking
+              ? 'Não foi possível vincular. Tente de novo.'
+              : 'Não foi possível concluir. Tente de novo.',
+        );
+    }
   }
 
   /// Entra (ou cria a conta) com Apple. Retorna false se a pessoa cancelou.
@@ -76,7 +197,12 @@ class AuthRepository {
       rawNonce: rawNonce,
       accessToken: apple.authorizationCode,
     );
-    final result = await _auth.signInWithCredential(cred);
+    final UserCredential result;
+    try {
+      result = await _auth.signInWithCredential(cred);
+    } on FirebaseAuthException catch (e) {
+      throw _friendly(e);
+    }
     // A Apple só envia o nome na primeira vez: guarda no perfil do Auth.
     final given = apple.givenName ?? '';
     final family = apple.familyName ?? '';
