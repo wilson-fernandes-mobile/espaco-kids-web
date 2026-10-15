@@ -104,6 +104,11 @@ class AuthRepository {
     final uid = _auth.currentUser?.uid;
     if (uid != null) {
       try {
+        // iOS sem token APNs (push não configurado): não há token para tirar.
+        if (defaultTargetPlatform == TargetPlatform.iOS &&
+            await FirebaseMessaging.instance.getAPNSToken() == null) {
+          throw StateError('sem token APNs');
+        }
         final token = await FirebaseMessaging.instance.getToken().timeout(
           const Duration(seconds: 3),
         );
