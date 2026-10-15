@@ -71,7 +71,9 @@ class FamilyRepository {
       await t.collection('members').doc(user.uid).update({'familyId': fid});
     } on FirebaseException catch (e) {
       if (e.code == 'permission-denied') {
-        throw const Failure('Não foi possível criar sua família. Tente de novo.');
+        throw const Failure(
+          'Não foi possível criar sua família. Tente de novo.',
+        );
       }
       rethrow;
     }
@@ -182,10 +184,10 @@ class FamilyRepository {
     required CareProfile profile,
   }) async {
     final t = _tenant(churchId);
-    await t.collection('health').doc(childId).set(
-      profile.toMap(nowIso(), uid),
-      SetOptions(merge: true),
-    );
+    await t
+        .collection('health')
+        .doc(childId)
+        .set(profile.toMap(nowIso(), uid), SetOptions(merge: true));
     await t.collection('children').doc(childId).update({
       'careAlert': profile.alert,
       'hasMedication': profile.hasMedication,

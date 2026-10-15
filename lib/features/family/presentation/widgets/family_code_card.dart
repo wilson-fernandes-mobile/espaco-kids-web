@@ -56,7 +56,9 @@ class _FamilyCodeCardState extends ConsumerState<FamilyCodeCard> {
     final user = ref.watch(sessionProvider).user!;
     final scheme = Theme.of(context).colorScheme;
     final code =
-        ref.watch(familyCodeProvider((user.churchId, user.familyId ?? ''))).valueOrNull;
+        ref
+            .watch(familyCodeProvider((user.churchId, user.familyId ?? '')))
+            .valueOrNull;
 
     return Card(
       child: Padding(
@@ -116,7 +118,8 @@ class _FamilyCodeCardState extends ConsumerState<FamilyCodeCard> {
                     child: OutlinedButton.icon(
                       onPressed: () async {
                         await Clipboard.setData(ClipboardData(text: code));
-                        if (context.mounted) showInfo(context, 'Código copiado.');
+                        if (context.mounted)
+                          showInfo(context, 'Código copiado.');
                       },
                       icon: const Icon(Icons.copy),
                       label: const Text('Copiar'),

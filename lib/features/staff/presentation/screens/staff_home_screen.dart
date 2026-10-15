@@ -20,6 +20,7 @@ import '../../../checkin/presentation/providers/checkin_actions.dart';
 import '../../../checkin/presentation/providers/checkin_providers.dart';
 import '../../../kids/domain/entities/child.dart';
 import '../../../kids/presentation/providers/kids_providers.dart';
+import '../widgets/my_room_card.dart';
 
 /// Painel da equipe: ocupação, chamadas abertas e pedidos das famílias.
 class StaffHomeScreen extends ConsumerWidget {
@@ -34,6 +35,7 @@ class StaffHomeScreen extends ConsumerWidget {
     final calls = ref.watch(callsProvider).valueOrNull ?? const [];
     final requests = ref.watch(pendingRequestsProvider).valueOrNull ?? const [];
     final openCalls = calls.where((c) => c.open).length;
+    final roomStaff = ref.watch(roomStaffProvider).valueOrNull ?? const [];
 
     // Professor vê primeiro as suas turmas.
     final mine = user.classIds.toSet();
@@ -61,6 +63,8 @@ class StaffHomeScreen extends ConsumerWidget {
                     ? 'Nenhuma criança na sala agora.'
                     : '${present.length} ${present.length == 1 ? 'criança na sala' : 'crianças na sala'} agora.',
           ),
+          const SizedBox(height: AppSpacing.md),
+          const MyRoomCard(),
           const SizedBox(height: AppSpacing.md),
           Row(
             children: [
@@ -122,12 +126,15 @@ class StaffHomeScreen extends ConsumerWidget {
               color: AppColors.secondary,
             ),
           ),
-          if (children.any((c) => present.contains(c.id) && c.hasMedication)) ...[
+          if (children.any(
+            (c) => present.contains(c.id) && c.hasMedication,
+          )) ...[
             const SizedBox(height: AppSpacing.lg),
             const FormSectionHeader(
               icon: Icons.medication_outlined,
               title: 'Medicações de hoje',
-              description: 'Crianças na sala que tomam remédio. Toque para ver horários.',
+              description:
+                  'Crianças na sala que tomam remédio. Toque para ver horários.',
             ),
             for (final c in children.where(
               (c) => present.contains(c.id) && c.hasMedication,
@@ -214,6 +221,27 @@ class StaffHomeScreen extends ConsumerWidget {
                                     ? AppColors.danger
                                     : AppColors.primary,
                           ),
+                          if (roomStaff.any((s) => s.classId == c.id)) ...[
+                            const SizedBox(height: AppSpacing.sm),
+                            Row(
+                              children: [
+                                const Icon(Icons.how_to_reg, size: 16),
+                                const SizedBox(width: AppSpacing.xs),
+                                Expanded(
+                                  child: Text(
+                                    roomStaff
+                                        .where((s) => s.classId == c.id)
+                                        .map((s) => s.name)
+                                        .join(', '),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style:
+                                        Theme.of(context).textTheme.bodySmall,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ],
                       ),
                     ),

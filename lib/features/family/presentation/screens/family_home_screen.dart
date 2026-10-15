@@ -18,6 +18,7 @@ import '../../../checkin/presentation/providers/checkin_providers.dart';
 import '../../../kids/domain/entities/child.dart';
 import '../../../kids/presentation/providers/kids_providers.dart';
 import '../../../kids/domain/entities/person.dart';
+import '../../../kids/domain/entities/room_staff.dart';
 import '../providers/family_providers.dart';
 import '../widgets/child_form.dart';
 import '../widgets/family_code_card.dart';
@@ -213,6 +214,56 @@ class _WhoAreYouCardState extends ConsumerState<_WhoAreYouCard> {
   }
 }
 
+/// "Equipe na sala": quem fez check-in na sala do filho (foto e nome).
+class _RoomTeam extends StatelessWidget {
+  const _RoomTeam({required this.team});
+
+  final List<RoomStaff> team;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.sm + 4),
+      decoration: BoxDecoration(
+        color: scheme.primary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Equipe na sala ${team.first.className}',
+            style: Theme.of(
+              context,
+            ).textTheme.labelMedium?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+          const SizedBox(height: AppSpacing.xs + 2),
+          Wrap(
+            spacing: AppSpacing.md,
+            runSpacing: AppSpacing.xs,
+            children: [
+              for (final s in team)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    PersonAvatar(name: s.name, photo: s.photoUrl, radius: 14),
+                    const SizedBox(width: AppSpacing.sm),
+                    Text(
+                      s.name.trim().split(' ').take(2).join(' '),
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _KidCard extends ConsumerWidget {
   const _KidCard({required this.child, required this.request});
 
@@ -250,6 +301,13 @@ class _KidCard extends ConsumerWidget {
     final presence = ref.watch(childPresenceProvider(child.id)).valueOrNull;
     final present = presence != null;
     final scheme = Theme.of(context).colorScheme;
+    // Equipe que fez check-in na sala do filho hoje.
+    final team =
+        (ref.watch(roomStaffProvider).valueOrNull ?? const <RoomStaff>[])
+            .where(
+              (s) => child.classId.isNotEmpty && s.classId == child.classId,
+            )
+            .toList();
 
     return PatternCard(
       child: Padding(
@@ -328,6 +386,10 @@ class _KidCard extends ConsumerWidget {
                 ],
               ),
             ),
+            if (team.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.sm),
+              _RoomTeam(team: team),
+            ],
             const SizedBox(height: AppSpacing.md),
             if (request != null)
               Container(

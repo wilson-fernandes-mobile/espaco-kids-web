@@ -156,7 +156,9 @@ class _CareFormScreenState extends ConsumerState<CareFormScreen> {
           onSelected:
               (on) => setState(
                 () => onChanged(
-                  on ? [...value, e.key] : value.where((x) => x != e.key).toList(),
+                  on
+                      ? [...value, e.key]
+                      : value.where((x) => x != e.key).toList(),
                 ),
               ),
         ),
@@ -187,7 +189,8 @@ class _CareFormScreenState extends ConsumerState<CareFormScreen> {
       helpText: 'Horário do medicamento',
     );
     if (t == null) return;
-    final hh = '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+    final hh =
+        '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
     final m = _meds[i];
     if (m.times.contains(hh)) return;
     setState(() {
@@ -248,7 +251,10 @@ class _CareFormScreenState extends ConsumerState<CareFormScreen> {
                         ),
                         items: [
                           for (final e in CareProfile.autismLevels.entries)
-                            DropdownMenuItem(value: e.key, child: Text(e.value)),
+                            DropdownMenuItem(
+                              value: e.key,
+                              child: Text(e.value),
+                            ),
                         ],
                         onChanged: (v) => setState(() => _level = v ?? 0),
                       ),
@@ -299,7 +305,8 @@ class _CareFormScreenState extends ConsumerState<CareFormScreen> {
                   _field(
                     _calming,
                     'O que acalma',
-                    hint: 'Ex.: abraço firme, fone de ouvido, brinquedo favorito',
+                    hint:
+                        'Ex.: abraço firme, fone de ouvido, brinquedo favorito',
                     lines: 2,
                   ),
                   _field(
@@ -336,7 +343,9 @@ class _CareFormScreenState extends ConsumerState<CareFormScreen> {
                   for (var i = 0; i < _meds.length; i++) _medCard(i),
                   OutlinedButton.icon(
                     onPressed:
-                        () => setState(() => _meds = [..._meds, const Medication()]),
+                        () => setState(
+                          () => _meds = [..._meds, const Medication()],
+                        ),
                     icon: const Icon(Icons.add),
                     label: const Text('Adicionar medicamento'),
                   ),
@@ -346,7 +355,11 @@ class _CareFormScreenState extends ConsumerState<CareFormScreen> {
                     title: 'Emergência e outros',
                   ),
                   _field(_emName, 'Contato de emergência'),
-                  _field(_emPhone, 'Telefone do contato', type: TextInputType.phone),
+                  _field(
+                    _emPhone,
+                    'Telefone do contato',
+                    type: TextInputType.phone,
+                  ),
                   _field(_plan, 'Plano de saúde (opcional)'),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
@@ -449,9 +462,7 @@ class _CareFormScreenState extends ConsumerState<CareFormScreen> {
               alignment: Alignment.centerRight,
               child: TextButton.icon(
                 onPressed:
-                    () => setState(
-                      () => _meds = [..._meds]..removeAt(i),
-                    ),
+                    () => setState(() => _meds = [..._meds]..removeAt(i)),
                 icon: const Icon(Icons.delete_outline),
                 label: const Text('Remover'),
               ),

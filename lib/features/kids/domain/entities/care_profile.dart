@@ -168,7 +168,8 @@ class CareProfile {
       emergencyName: (m['emergencyName'] as String?) ?? '',
       emergencyPhone: (m['emergencyPhone'] as String?) ?? '',
       healthPlan: (m['healthPlan'] as String?) ?? '',
-      imageConsent: m['imageConsent'] is bool ? m['imageConsent'] as bool : null,
+      imageConsent:
+          m['imageConsent'] is bool ? m['imageConsent'] as bool : null,
       text: (m['text'] as String?) ?? '',
       updatedAt: (m['updatedAt'] as String?) ?? '',
     );

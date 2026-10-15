@@ -297,9 +297,8 @@ class _CareCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(sessionProvider).user!;
-    final care = ref
-        .watch(_careProvider((user.churchId, child.id)))
-        .valueOrNull;
+    final care =
+        ref.watch(_careProvider((user.churchId, child.id))).valueOrNull;
     if (!child.careAlert && care == null) return const SizedBox.shrink();
     final scheme = Theme.of(context).colorScheme;
     final c = care;
@@ -363,8 +362,7 @@ class _CareCard extends ConsumerWidget {
                   line(Icons.self_improvement, 'Acalma: ${c.calming}'),
                 if (c.triggers.isNotEmpty)
                   line(Icons.bolt_outlined, 'Crise: ${c.triggers}'),
-                if (c.diet.isNotEmpty)
-                  line(Icons.restaurant_outlined, c.diet),
+                if (c.diet.isNotEmpty) line(Icons.restaurant_outlined, c.diet),
                 for (final m in c.medications.where((m) => m.name.isNotEmpty))
                   line(
                     Icons.medication_outlined,
@@ -389,6 +387,5 @@ class _CareCard extends ConsumerWidget {
 }
 
 final _careProvider = StreamProvider.family<CareProfile?, (String, String)>(
-  (ref, key) =>
-      ref.watch(familyRepositoryProvider).watchCare(key.$1, key.$2),
+  (ref, key) => ref.watch(familyRepositoryProvider).watchCare(key.$1, key.$2),
 );

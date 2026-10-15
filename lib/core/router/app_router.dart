@@ -116,7 +116,9 @@ final routerProvider = Provider<GoRouter>((ref) {
         case SessionStatus.noProfile:
         case SessionStatus.inactive:
           // Pode trocar de igreja mesmo com acesso bloqueado numa delas.
-          return (loc == '/bloqueado' || loc == '/igrejas') ? null : '/bloqueado';
+          return (loc == '/bloqueado' || loc == '/igrejas')
+              ? null
+              : '/bloqueado';
         case SessionStatus.ready:
           final family = s.user!.isFamily;
           final home = family ? '/familia' : '/inicio';
@@ -152,10 +154,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/cadastro-familia',
         builder: (_, _) => const FamilySetupScreen(),
       ),
-      GoRoute(
-        path: '/igrejas',
-        builder: (_, _) => const ChurchSelectScreen(),
-      ),
+      GoRoute(path: '/igrejas', builder: (_, _) => const ChurchSelectScreen()),
       GoRoute(
         path: '/bloqueado',
         builder:

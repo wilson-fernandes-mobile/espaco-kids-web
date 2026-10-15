@@ -4,6 +4,8 @@ import '../domain/entities/child.dart';
 import '../domain/entities/classroom.dart';
 import '../domain/entities/person.dart';
 import '../domain/entities/presence.dart';
+import '../domain/entities/room_staff.dart';
+import '../../../core/utils/date_format.dart';
 
 /// Leitura dos cadastros (crianças, turmas, pessoas, presença).
 /// Somente leitura: o cadastro é feito no painel web.
@@ -36,6 +38,36 @@ class KidsRepository {
             s.docs.map((d) => Classroom.fromMap(d.id, d.data())).toList()
               ..sort((a, b) => a.name.compareTo(b.name)),
       );
+
+  /// Equipe com check-in em alguma sala (a família também lê, para saber
+  /// quem é o professor da sala do filho).
+  Stream<List<RoomStaff>> watchRoomStaff() => _t
+      .collection('roomStaff')
+      .snapshots()
+      .map(
+        (s) =>
+            s.docs.map((d) => RoomStaff.fromMap(d.id, d.data())).toList()
+              ..sort((a, b) => a.name.compareTo(b.name)),
+      );
+
+  /// Check-in da equipe numa sala. Como o documento é um só por pessoa,
+  /// entrar noutra sala já faz o check-out da anterior.
+  Future<void> enterRoom({
+    required String uid,
+    required String name,
+    String? photoUrl,
+    required Classroom room,
+  }) => _t.collection('roomStaff').doc(uid).set({
+    'uid': uid,
+    'name': name,
+    if (photoUrl != null && photoUrl.isNotEmpty) 'photoUrl': photoUrl,
+    'classId': room.id,
+    'className': room.name,
+    'since': nowIso(),
+  });
+
+  Future<void> leaveRoom(String uid) =>
+      _t.collection('roomStaff').doc(uid).delete();
 
   /// Quem está na sala agora (equipe).
   Stream<List<Presence>> watchPresence() => _t

@@ -7,6 +7,7 @@ import '../../domain/entities/child.dart';
 import '../../domain/entities/classroom.dart';
 import '../../domain/entities/person.dart';
 import '../../domain/entities/presence.dart';
+import '../../domain/entities/room_staff.dart';
 
 final kidsRepositoryProvider = Provider<KidsRepository>(
   (ref) => KidsRepository(ref.watch(tenantRefProvider)),
@@ -52,6 +53,23 @@ final childPresenceProvider = StreamProvider.family<Presence?, String>(
 final familyPeopleProvider = StreamProvider.family<List<Person>, String>(
   (ref, familyId) => ref.watch(kidsRepositoryProvider).watchPeople(familyId),
 );
+
+/// Equipe com check-in em salas hoje (equipe e famílias leem).
+final roomStaffProvider = StreamProvider<List<RoomStaff>>((ref) {
+  final user = ref.watch(sessionProvider).user;
+  if (user == null) return Stream.value(const []);
+  return ref
+      .watch(kidsRepositoryProvider)
+      .watchRoomStaff()
+      .map((l) => l.where((s) => s.today).toList());
+});
+
+/// Em qual sala a pessoa logada está (null = sem check-in).
+final myRoomProvider = Provider<RoomStaff?>((ref) {
+  final uid = ref.watch(sessionProvider).user?.uid;
+  final list = ref.watch(roomStaffProvider).valueOrNull ?? const [];
+  return list.where((s) => s.uid == uid).firstOrNull;
+});
 
 /// Ids das crianças presentes agora (equipe).
 final presentIdsProvider = Provider<Set<String>>((ref) {

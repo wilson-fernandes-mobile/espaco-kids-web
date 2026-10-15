@@ -126,9 +126,9 @@ class _FamilySetupScreenState extends ConsumerState<FamilySetupScreen> {
                 children: [
                   Text(
                     'Passo ${_step + 1} de ${_titles.length}',
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: scheme.primary,
-                    ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.labelLarge?.copyWith(color: scheme.primary),
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(

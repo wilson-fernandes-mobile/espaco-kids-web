@@ -136,7 +136,9 @@ class TenantRepository {
     if (user == null) throw const Failure('Entre na sua conta primeiro.');
     final email = user.email;
     if (email == null || email.isEmpty) {
-      throw const Failure('Sua conta não tem e-mail. Use outra forma de entrar.');
+      throw const Failure(
+        'Sua conta não tem e-mail. Use outra forma de entrar.',
+      );
     }
     final info = await peekCode(code);
     _checkKind(info, expected);

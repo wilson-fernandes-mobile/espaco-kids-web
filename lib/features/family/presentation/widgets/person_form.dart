@@ -76,8 +76,7 @@ class _PersonSheetState extends ConsumerState<_PersonSheet> {
             phone: _phone.text.trim(),
             relation: _relation.text,
             whatsapp: _whatsapp,
-            validUntil:
-                _until?.toIso8601String().substring(0, 10),
+            validUntil: _until?.toIso8601String().substring(0, 10),
             children: widget.children,
           );
       if (mounted) Navigator.pop(context, true);
@@ -142,7 +141,10 @@ class _PersonSheetState extends ConsumerState<_PersonSheet> {
                   hintText: guardian ? 'Pai, mãe, avó…' : 'Tio, vizinha, avô…',
                 ),
                 validator:
-                    (v) => (v ?? '').trim().isEmpty ? 'Informe o parentesco' : null,
+                    (v) =>
+                        (v ?? '').trim().isEmpty
+                            ? 'Informe o parentesco'
+                            : null,
               ),
               const SizedBox(height: AppSpacing.md),
               TextFormField(

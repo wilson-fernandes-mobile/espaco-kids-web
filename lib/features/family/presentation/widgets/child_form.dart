@@ -75,7 +75,9 @@ class _ChildFormFieldsState extends State<ChildFormFields> {
       helpText: 'Data de nascimento',
     );
     if (d != null) {
-      setState(() => widget.controller.birth = d.toIso8601String().substring(0, 10));
+      setState(
+        () => widget.controller.birth = d.toIso8601String().substring(0, 10),
+      );
     }
   }
 
@@ -110,7 +112,8 @@ class _ChildFormFieldsState extends State<ChildFormFields> {
         ),
         const SizedBox(height: AppSpacing.md),
         FormField<String>(
-          validator: (_) => c.birth == null ? 'Informe a data de nascimento' : null,
+          validator:
+              (_) => c.birth == null ? 'Informe a data de nascimento' : null,
           builder:
               (state) => InkWell(
                 onTap: () async {
@@ -184,12 +187,11 @@ class _ChildSheetState extends ConsumerState<_ChildSheet> {
     final child = widget.child;
     if (child != null) {
       final user = ref.read(sessionProvider).user!;
-      ref
-          .read(familyRepositoryProvider)
-          .healthOf(user.churchId, child.id)
-          .then((h) {
-            if (mounted && _c.health.text.isEmpty) _c.health.text = h;
-          });
+      ref.read(familyRepositoryProvider).healthOf(user.churchId, child.id).then(
+        (h) {
+          if (mounted && _c.health.text.isEmpty) _c.health.text = h;
+        },
+      );
     }
   }
 

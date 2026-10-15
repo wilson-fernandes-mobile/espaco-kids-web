@@ -38,9 +38,10 @@ class AuthRepository {
     final google = GoogleSignIn(
       scopes: const ['email'],
       serverClientId: _googleServerClientId,
-      clientId: defaultTargetPlatform == TargetPlatform.iOS
-          ? _googleIosClientId
-          : null,
+      clientId:
+          defaultTargetPlatform == TargetPlatform.iOS
+              ? _googleIosClientId
+              : null,
     );
     final account = await google.signIn();
     if (account == null) return false;

@@ -6,7 +6,9 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/feedback.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../kids/presentation/providers/kids_providers.dart';
+import '../../../staff/presentation/widgets/my_room_card.dart';
 
 /// Lê o QR do crachá (`EK:<token>`) e abre a ficha da criança.
 /// O QR só *localiza* o cadastro: a liberação da saída sempre passa pela
@@ -36,6 +38,11 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
   Future<void> _handle(String raw) async {
     if (_busy) return;
     final value = raw.trim();
+    // Etiqueta da sala (`EKT:<igreja>:<turma>`): check-in da equipe na sala.
+    if (value.startsWith('EKT:')) {
+      await _handleRoomTag(value);
+      return;
+    }
     if (!value.startsWith('EK:')) {
       showInfo(context, 'QR Code não reconhecido.');
       return;
@@ -58,12 +65,33 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
     }
   }
 
+  Future<void> _handleRoomTag(String value) async {
+    final parts = value.split(':');
+    final user = ref.read(sessionProvider).user;
+    final classes = ref.read(classesProvider).valueOrNull ?? const [];
+    final room =
+        parts.length == 3 && parts[1] == user?.churchId
+            ? classes.where((c) => c.id == parts[2]).firstOrNull
+            : null;
+    if (room == null) {
+      showInfo(context, 'Etiqueta de sala não reconhecida nesta igreja.');
+      return;
+    }
+    setState(() => _busy = true);
+    try {
+      await enterRoom(context, ref, room);
+      if (mounted) context.go('/inicio');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         leading: const OpenDrawerButton(),
-        title: const Text('Ler crachá'),
+        title: const Text('Ler crachá ou sala'),
       ),
       body: Column(
         children: [
