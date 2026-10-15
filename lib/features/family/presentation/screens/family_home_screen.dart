@@ -6,6 +6,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/date_format.dart';
 import '../../../../shared/widgets/async_value_widget.dart';
+import '../../../../shared/widgets/avatar_stack.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../../shared/widgets/feedback.dart';
 import '../../../../shared/widgets/greeting_header.dart';
@@ -216,51 +217,100 @@ class _WhoAreYouCardState extends ConsumerState<_WhoAreYouCard> {
   }
 }
 
-/// "Equipe na sala": quem fez check-in na sala do filho (foto e nome).
+/// "Equipe na sala": só as bolinhas (avatares sobrepostos); ao tocar, abre a
+/// lista de quem está na sala.
 class _RoomTeam extends StatelessWidget {
   const _RoomTeam({required this.team});
 
   final List<RoomStaff> team;
 
+  void _openList(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder:
+          (ctx) => SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                0,
+                AppSpacing.md,
+                AppSpacing.md,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Equipe na sala ${team.first.className}',
+                    style: Theme.of(ctx).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    'Quem está com as crianças agora.',
+                    style: Theme.of(ctx).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Flexible(
+                    child: ListView(
+                      shrinkWrap: true,
+                      children: [
+                        for (final s in team)
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: PersonAvatar(
+                              name: s.name,
+                              photo: s.photoUrl,
+                              radius: 22,
+                            ),
+                            title: Text(s.name),
+                            subtitle: Text('Na sala desde ${hhmm(s.since)}'),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.sm + 4),
-      decoration: BoxDecoration(
-        color: scheme.primary.withValues(alpha: 0.08),
+    return Material(
+      color: scheme.primary.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
+      child: InkWell(
         borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Equipe na sala ${team.first.className}',
-            style: Theme.of(
-              context,
-            ).textTheme.labelMedium?.copyWith(color: scheme.onSurfaceVariant),
+        onTap: () => _openList(context),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.sm + 4,
+            vertical: AppSpacing.sm,
           ),
-          const SizedBox(height: AppSpacing.xs + 2),
-          Wrap(
-            spacing: AppSpacing.md,
-            runSpacing: AppSpacing.xs,
+          child: Row(
             children: [
-              for (final s in team)
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    PersonAvatar(name: s.name, photo: s.photoUrl, radius: 14),
-                    const SizedBox(width: AppSpacing.sm),
-                    Text(
-                      s.name.trim().split(' ').take(2).join(' '),
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ],
+              AvatarStack(
+                people: [
+                  for (final s in team)
+                    (id: s.uid, name: s.name, photoUrl: s.photoUrl),
+                ],
+              ),
+              const SizedBox(width: AppSpacing.sm + 4),
+              Expanded(
+                child: Text(
+                  'Equipe na sala ${team.first.className}',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
                 ),
+              ),
+              Icon(Icons.chevron_right, color: scheme.onSurfaceVariant),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
