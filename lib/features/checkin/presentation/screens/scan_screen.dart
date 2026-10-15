@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../shared/widgets/open_drawer_button.dart';
+import '../../../../shared/widgets/mode_switch_action.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -91,6 +92,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: const OpenDrawerButton(),
+        actions: const [ModeSwitchAction()],
         title: const Text('Ler crachá ou sala'),
       ),
       body: Column(

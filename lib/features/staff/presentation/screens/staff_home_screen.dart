@@ -10,6 +10,7 @@ import '../../../../shared/widgets/feedback.dart';
 import '../../../../shared/widgets/form_section_header.dart';
 import '../../../../shared/widgets/greeting_header.dart';
 import '../../../../shared/widgets/open_drawer_button.dart';
+import '../../../../shared/widgets/mode_switch_action.dart';
 import '../../../../shared/widgets/pattern_card.dart';
 import '../../../../shared/widgets/person_avatar.dart';
 import '../../../../shared/widgets/stat_card.dart';
@@ -48,6 +49,7 @@ class StaffHomeScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         leading: const OpenDrawerButton(),
+        actions: const [ModeSwitchAction()],
         title: const Text('Início'),
       ),
       body: ListView(

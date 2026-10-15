@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../shared/widgets/open_drawer_button.dart';
+import '../../../../shared/widgets/mode_switch_action.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_spacing.dart';
@@ -37,6 +38,7 @@ class FamilyPeopleScreen extends ConsumerWidget {
       ),
       appBar: AppBar(
         leading: const OpenDrawerButton(),
+        actions: const [ModeSwitchAction()],
         title: const Text('Quem pode buscar'),
       ),
       body: AsyncValueWidget(

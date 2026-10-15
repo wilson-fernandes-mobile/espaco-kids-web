@@ -36,6 +36,7 @@ class CallsRepository {
     required String reason,
     required String note,
     required String staffName,
+    required String staffId,
   }) async {
     final at = nowIso();
     await _t.collection('calls').add({
@@ -45,6 +46,8 @@ class CallsRepository {
       'reason': reason,
       'note': note,
       'requestedBy': staffName,
+      // Quem chamou: recebe o aviso quando a família toca em "Estou indo".
+      'requestedById': staffId,
       'createdAt': at,
       'status': 'pendente',
       'history': [

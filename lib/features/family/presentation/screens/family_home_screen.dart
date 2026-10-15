@@ -10,6 +10,7 @@ import '../../../../shared/widgets/empty_state.dart';
 import '../../../../shared/widgets/feedback.dart';
 import '../../../../shared/widgets/greeting_header.dart';
 import '../../../../shared/widgets/open_drawer_button.dart';
+import '../../../../shared/widgets/mode_switch_action.dart';
 import '../../../../shared/widgets/pattern_card.dart';
 import '../../../../shared/widgets/person_avatar.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -36,6 +37,7 @@ class FamilyHomeScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         leading: const OpenDrawerButton(),
+        actions: const [ModeSwitchAction()],
         title: const Text('Meus filhos'),
       ),
       floatingActionButton: FloatingActionButton.extended(

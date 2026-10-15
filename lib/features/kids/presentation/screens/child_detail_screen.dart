@@ -113,7 +113,13 @@ class _Body extends ConsumerWidget {
       final user = ref.read(sessionProvider).user!;
       await ref
           .read(callsRepositoryProvider)
-          .open(child: child, reason: reason, note: '', staffName: user.name);
+          .open(
+            child: child,
+            reason: reason,
+            note: '',
+            staffName: user.name,
+            staffId: user.uid,
+          );
       if (context.mounted)
         showInfo(context, 'Chamada aberta para os responsáveis.');
     } catch (e) {
