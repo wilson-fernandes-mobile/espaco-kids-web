@@ -48,42 +48,62 @@ class _SocialButtonsState extends ConsumerState<SocialButtons> {
             const Expanded(child: Divider()),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-              child: Text('ou', style: Theme.of(context).textTheme.bodySmall),
+              child: Text(
+                'ou continue com',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
             ),
             const Expanded(child: Divider()),
           ],
         ),
-        const SizedBox(height: AppSpacing.md),
-        LastUsedBadge(
-          show: last == 'google',
-          child: SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed:
-                  _busy ? null : () => _run('google', repo.signInWithGoogle),
-              icon: const Text(
-                'G',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+        const SizedBox(height: AppSpacing.lg),
+        Row(
+          children: [
+            Expanded(
+              child: LastUsedBadge(
+                show: last == 'google',
+                child: SizedBox(
+                  height: 52,
+                  child: OutlinedButton.icon(
+                    onPressed:
+                        _busy
+                            ? null
+                            : () => _run('google', repo.signInWithGoogle),
+                    icon: const Text(
+                      'G',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 20,
+                      ),
+                    ),
+                    label: const Text('Google'),
+                  ),
+                ),
               ),
-              label: const Text('Continuar com Google'),
             ),
-          ),
+            if (apple) ...[
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: LastUsedBadge(
+                  show: last == 'apple',
+                  child: SizedBox(
+                    height: 52,
+                    child: OutlinedButton.icon(
+                      onPressed:
+                          _busy
+                              ? null
+                              : () => _run('apple', repo.signInWithApple),
+                      icon: const Icon(Icons.apple, size: 24),
+                      label: const Text('Apple'),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
         ),
-        if (apple) ...[
-          const SizedBox(height: AppSpacing.md),
-          LastUsedBadge(
-            show: last == 'apple',
-            child: SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed:
-                    _busy ? null : () => _run('apple', repo.signInWithApple),
-                icon: const Icon(Icons.apple),
-                label: const Text('Continuar com Apple'),
-              ),
-            ),
-          ),
-        ],
       ],
     );
   }

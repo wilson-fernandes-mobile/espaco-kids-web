@@ -16,6 +16,8 @@ class LastUsedBadge extends StatelessWidget {
     if (!show) return child;
     final scheme = Theme.of(context).colorScheme;
     return Stack(
+      // passthrough: o botão recebe a largura do pai (sem encolher).
+      fit: StackFit.passthrough,
       clipBehavior: Clip.none,
       children: [
         child,
