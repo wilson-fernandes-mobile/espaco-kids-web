@@ -31,6 +31,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   _Mode _mode = _Mode.family;
   AppRole _staffRole = AppRole.professor;
   bool _busy = false;
+  bool _obscure = true;
 
   @override
   void dispose() {
@@ -168,9 +169,22 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       const SizedBox(height: AppSpacing.md),
                       TextFormField(
                         controller: _password,
-                        obscureText: true,
-                        decoration: const InputDecoration(
+                        obscureText: _obscure,
+                        autofillHints: const [AutofillHints.newPassword],
+                        decoration: InputDecoration(
                           labelText: 'Senha (mín. 6)',
+                          // Sem campo de confirmação: deixa conferir o que digitou.
+                          suffixIcon: IconButton(
+                            tooltip:
+                                _obscure ? 'Mostrar senha' : 'Ocultar senha',
+                            icon: Icon(
+                              _obscure
+                                  ? Icons.visibility_outlined
+                                  : Icons.visibility_off_outlined,
+                            ),
+                            onPressed:
+                                () => setState(() => _obscure = !_obscure),
+                          ),
                         ),
                         validator:
                             (v) =>
