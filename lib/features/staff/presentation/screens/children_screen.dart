@@ -11,9 +11,10 @@ import '../../../../shared/widgets/empty_state.dart';
 import '../../../kids/domain/entities/child.dart';
 import '../../../kids/presentation/providers/kids_providers.dart';
 
-enum _Filter { all, present, absent }
+enum _Filter { all, mine, present, absent }
 
-/// Lista de crianças com busca e filtro "na sala / fora".
+/// Lista de crianças com busca e filtros: "minha sala" (quando há check-in
+/// numa sala), "na sala" e "fora".
 class ChildrenScreen extends ConsumerStatefulWidget {
   const ChildrenScreen({super.key});
 
@@ -23,12 +24,22 @@ class ChildrenScreen extends ConsumerStatefulWidget {
 
 class _ChildrenScreenState extends ConsumerState<ChildrenScreen> {
   String _query = '';
-  _Filter _filter = _Filter.all;
+  late _Filter _filter;
 
-  List<Child> _apply(List<Child> all, Set<String> present) {
+  @override
+  void initState() {
+    super.initState();
+    // Com check-in numa sala, abre já filtrado nas crianças dela.
+    _filter = ref.read(myRoomProvider) != null ? _Filter.mine : _Filter.all;
+  }
+
+  List<Child> _apply(List<Child> all, Set<String> present, String? roomId) {
     final q = _query.trim().toLowerCase();
     return all.where((c) {
       if (!c.active) return false;
+      if (_filter == _Filter.mine && roomId != null && c.classId != roomId) {
+        return false;
+      }
       final isPresent = present.contains(c.id);
       if (_filter == _Filter.present && !isPresent) return false;
       if (_filter == _Filter.absent && isPresent) return false;
@@ -43,6 +54,10 @@ class _ChildrenScreenState extends ConsumerState<ChildrenScreen> {
   Widget build(BuildContext context) {
     final present = ref.watch(presentIdsProvider);
     final children = ref.watch(childrenProvider);
+    final room = ref.watch(myRoomProvider);
+    // Sem check-in, o filtro "Minha sala" não existe (cai em "Todas").
+    final filter =
+        room == null && _filter == _Filter.mine ? _Filter.all : _filter;
 
     return Scaffold(
       appBar: AppBar(
@@ -75,6 +90,7 @@ class _ChildrenScreenState extends ConsumerState<ChildrenScreen> {
                 for (final e
                     in {
                       _Filter.all: 'Todas',
+                      if (room != null) _Filter.mine: 'Minha sala',
                       _Filter.present: 'Na sala',
                       _Filter.absent: 'Fora',
                     }.entries)
@@ -82,7 +98,7 @@ class _ChildrenScreenState extends ConsumerState<ChildrenScreen> {
                     padding: const EdgeInsets.only(right: AppSpacing.sm),
                     child: ChoiceChip(
                       label: Text(e.value),
-                      selected: _filter == e.key,
+                      selected: filter == e.key,
                       onSelected: (_) => setState(() => _filter = e.key),
                     ),
                   ),
@@ -93,7 +109,7 @@ class _ChildrenScreenState extends ConsumerState<ChildrenScreen> {
             child: AsyncValueWidget(
               value: children,
               data: (all) {
-                final list = _apply(all, present);
+                final list = _apply(all, present, room?.classId);
                 if (list.isEmpty) {
                   return const EmptyState(
                     icon: Icons.child_care,
