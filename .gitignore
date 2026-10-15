@@ -43,3 +43,11 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Chaves e certificados (nunca versionar)
+*.p8
+*.pem
+*.cer
+*.certSigningRequest
+*.certAuthorityConfig
+*.p12
