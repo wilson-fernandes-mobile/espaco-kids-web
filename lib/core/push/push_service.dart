@@ -18,8 +18,36 @@ class PushService {
   Future<void> register(String uid) async {
     try {
       final messaging = FirebaseMessaging.instance;
+      // iOS: com o app aberto o aviso não aparece sozinho; isto o mostra.
+      await messaging.setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
       final settings = await messaging.requestPermission();
-      if (settings.authorizationStatus == AuthorizationStatus.denied) return;
+      if (settings.authorizationStatus == AuthorizationStatus.denied) {
+        debugPrint('push: permissão de notificações negada');
+        return;
+      }
+      // iOS: o token do FCM só existe depois que a Apple entrega o token APNs
+      // (pode demorar alguns segundos após a permissão). Pedir antes disso
+      // falha com "apns-token-not-set".
+      if (defaultTargetPlatform == TargetPlatform.iOS) {
+        String? apns;
+        for (var i = 0; i < 20 && apns == null; i++) {
+          apns = await messaging.getAPNSToken();
+          if (apns == null) {
+            await Future<void>.delayed(const Duration(seconds: 1));
+          }
+        }
+        if (apns == null) {
+          debugPrint(
+            'push: sem token APNs (confira Push Notifications no Xcode e o '
+            'perfil de assinatura)',
+          );
+          return;
+        }
+      }
       final token = await messaging.getToken();
       if (token == null) return;
       _uid = uid;
