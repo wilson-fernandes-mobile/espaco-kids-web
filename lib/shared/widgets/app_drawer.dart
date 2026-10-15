@@ -110,14 +110,17 @@ class AppDrawer extends ConsumerWidget {
               label: 'Sair',
               color: scheme.error,
               onTap: () async {
-                Navigator.of(context).pop();
+                // Confirma com o menu ainda aberto: se ele fechasse antes, o
+                // contexto e o `ref` já estariam descartados e nada acontecia.
+                final repo = ref.read(authRepositoryProvider);
                 if (await confirm(
                   context,
                   title: 'Sair',
                   message: 'Deseja sair da sua conta?',
                   action: 'Sair',
                 )) {
-                  await ref.read(authRepositoryProvider).signOut();
+                  if (context.mounted) Navigator.of(context).pop();
+                  await repo.signOut();
                 }
               },
             ),

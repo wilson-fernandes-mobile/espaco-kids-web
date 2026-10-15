@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/services/local_preferences_service.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/feedback.dart';
 import '../providers/auth_providers.dart';
 import '../widgets/auth_background.dart';
 import '../widgets/logo_header.dart';
 import '../widgets/social_buttons.dart';
+
+const _lastEmailKey = 'last_login_email';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -24,6 +27,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _obscure = true;
 
   @override
+  void initState() {
+    super.initState();
+    // Lembra o último e-mail usado no login com e-mail e senha.
+    _email.text =
+        ref.read(sharedPreferencesProvider).getString(_lastEmailKey) ?? '';
+  }
+
+  @override
   void dispose() {
     _email.dispose();
     _password.dispose();
@@ -33,10 +44,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _submit() async {
     if (!_form.currentState!.validate()) return;
     setState(() => _busy = true);
+    final prefs = ref.read(sharedPreferencesProvider);
+    final email = _email.text.trim();
     try {
-      await ref
-          .read(authRepositoryProvider)
-          .signIn(_email.text, _password.text);
+      await ref.read(authRepositoryProvider).signIn(email, _password.text);
+      await prefs.setString(_lastEmailKey, email);
     } catch (e) {
       if (mounted) showError(context, e);
     } finally {

@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
@@ -95,7 +96,35 @@ class AuthRepository {
   Future<void> resetPassword(String email) =>
       _auth.sendPasswordResetEmail(email: email.trim());
 
-  Future<void> signOut() => _auth.signOut();
+  /// Sai da conta. Antes, tira o token de push deste aparelho da conta (para
+  /// não receber avisos de quem saiu) e encerra a sessão do Google, para a
+  /// próxima entrada poder escolher outra conta. Nada disso trava a saída.
+  Future<void> signOut() async {
+    final uid = _auth.currentUser?.uid;
+    if (uid != null) {
+      try {
+        final token = await FirebaseMessaging.instance.getToken().timeout(
+          const Duration(seconds: 3),
+        );
+        if (token != null) {
+          await _db
+              .doc('users/$uid')
+              .update({
+                'fcmTokens': FieldValue.arrayRemove([token]),
+              })
+              .timeout(const Duration(seconds: 3));
+        }
+      } catch (e) {
+        debugPrint('signOut push: $e');
+      }
+    }
+    try {
+      await GoogleSignIn().signOut().timeout(const Duration(seconds: 3));
+    } catch (e) {
+      debugPrint('signOut google: $e');
+    }
+    await _auth.signOut();
+  }
 
   /// Define quem o usuário é dentro da família (primeiro acesso), na igreja
   /// em que está.
