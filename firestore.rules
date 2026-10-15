@@ -237,6 +237,16 @@ service cloud.firestore {
         allow delete: if isCoord(churchId) || ownFamilyDoc(churchId, resource.data.familyId);
       }
       match /classes/{id}     { allow read: if isMember(churchId); allow write: if isCoord(churchId); }
+      // Equipe com check-in numa sala (um documento por pessoa: entrar noutra sala
+      // sobrescreve e faz o check-out da anterior). Os pais leem para ver quem
+      // é o professor da sala do filho.
+      match /roomStaff/{uid} {
+        allow read: if isMember(churchId);
+        allow create, update: if isStaff(churchId) && request.auth.uid == uid
+          && request.resource.data.uid == uid
+          && request.resource.data.keys().hasOnly(['uid', 'name', 'photoUrl', 'classId', 'className', 'since']);
+        allow delete: if isStaff(churchId) && (request.auth.uid == uid || isCoord(churchId));
+      }
       match /badges/{id}      { allow read: if isStaff(churchId); allow create, update: if canRegister(churchId); allow delete: if false; }
 
       match /attendance/{id}  { allow read: if isStaff(churchId); allow create, update: if canRegister(churchId); allow delete: if false; }

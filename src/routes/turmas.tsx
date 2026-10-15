@@ -10,10 +10,14 @@ import {
   Loader2,
   Pencil,
   Plus,
+  QrCode,
+  Printer,
   School,
   UserRound,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
+import { useAuth } from "@/lib/auth";
+import { RoomTag } from "@/components/app/room-tag";
 import { can, occupancy } from "@/lib/domain/rules";
 import {
   EmptyState,
@@ -199,6 +203,8 @@ function ClassesPage() {
   const { state, role, loading } = useStore();
   const [edit, setEdit] = useState<ClassRoom | "new" | null>(null);
   const [view, setView] = useState<ClassRoom | null>(null);
+  const [tag, setTag] = useState<ClassRoom | null>(null);
+  const { churchId, churchName } = useAuth();
   if (!can(role, "turmas")) return <Restricted />;
   if (loading) return <PageLoading />;
   const manage = role === "admin" || role === "coordenacao";
@@ -321,6 +327,17 @@ function ClassesPage() {
                     <Button
                       variant="ghost"
                       size="icon"
+                      aria-label={`Etiqueta da sala ${c.name}`}
+                      title="Etiqueta da sala (QR para a equipe)"
+                      onClick={() => setTag(c)}
+                    >
+                      <QrCode />
+                    </Button>
+                  )}
+                  {manage && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       aria-label={`Editar ${c.name}`}
                       onClick={() => setEdit(c)}
                     >
@@ -338,6 +355,44 @@ function ClassesPage() {
         initial={edit && edit !== "new" ? edit : undefined}
         onClose={() => setEdit(null)}
       />
+      <Dialog open={!!tag} onOpenChange={(o) => !o && setTag(null)}>
+        <DialogContent className="no-print sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Etiqueta da sala</DialogTitle>
+            <DialogDescription>
+              Imprima e cole na porta. A equipe lê o QR no app (Ler crachá ou
+              sala) para fazer check-in na sala; os pais veem quem está com os
+              filhos. Entrar em outra sala faz o check-out da anterior.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center overflow-x-auto py-2">
+            {tag && churchId && (
+              <RoomTag
+                cls={tag}
+                churchId={churchId}
+                churchName={churchName ?? undefined}
+              />
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTag(null)}>
+              Fechar
+            </Button>
+            <Button onClick={() => window.print()}>
+              <Printer /> Imprimir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <div className="print-only">
+        {tag && churchId && (
+          <RoomTag
+            cls={tag}
+            churchId={churchId}
+            churchName={churchName ?? undefined}
+          />
+        )}
+      </div>
       <Sheet open={!!view} onOpenChange={(o) => !o && setView(null)}>
         <SheetContent className="w-full sm:max-w-md">
           <SheetHeader>
