@@ -22,6 +22,7 @@ import {
 } from "@/components/app/login-screen";
 import { ChurchPicker } from "@/components/app/church-picker";
 import { AppShell } from "@/components/app/app-shell";
+import { LandingPage } from "@/components/site/landing";
 import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
@@ -150,13 +151,27 @@ function RootComponent() {
   );
 }
 
+const PUBLIC_PATHS = [
+  "/planos",
+  "/ajuda",
+  "/contato",
+  "/privacidade",
+  "/termos-de-uso",
+  "/lgpd",
+  "/exclusao-de-conta",
+];
+
 /** Porta de entrada: só monta o app (e assina o Firestore) depois do login. */
 function Gate() {
   const { status } = useAuth();
   const path = useRouterState({ select: (s) => s.location.pathname });
+  // Páginas públicas (site, políticas): abertas com ou sem login, fora do painel.
+  if (PUBLIC_PATHS.includes(path)) return <Outlet />;
   if (status === "loading") return <Splash />;
-  if (status === "signed-out")
+  if (status === "signed-out") {
+    if (path === "/") return <LandingPage />;
     return path === "/registrar" ? <RegisterScreen /> : <LoginScreen />;
+  }
   if (status === "needs-church") return <ChurchPicker />;
   if (status === "no-profile" || status === "inactive")
     return <BlockedScreen kind={status} />;

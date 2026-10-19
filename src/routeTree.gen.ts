@@ -10,14 +10,22 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AjudaRouteImport } from './routes/ajuda'
 import { Route as ChamadasRouteImport } from './routes/chamadas'
 import { Route as CheckinRouteImport } from './routes/checkin'
 import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
+import { Route as ContatoRouteImport } from './routes/contato'
 import { Route as CrachasRouteImport } from './routes/crachas'
+import { Route as EntrarRouteImport } from './routes/entrar'
+import { Route as ExclusaoDeContaRouteImport } from './routes/exclusao-de-conta'
 import { Route as FamiliasRouteImport } from './routes/familias'
+import { Route as LgpdRouteImport } from './routes/lgpd'
 import { Route as NotificacoesRouteImport } from './routes/notificacoes'
+import { Route as PlanosRouteImport } from './routes/planos'
+import { Route as PrivacidadeRouteImport } from './routes/privacidade'
 import { Route as RegistrarRouteImport } from './routes/registrar'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
+import { Route as TermosDeUsoRouteImport } from './routes/termos-de-uso'
 import { Route as TurmasRouteImport } from './routes/turmas'
 import { Route as UsuariosRouteImport } from './routes/usuarios'
 import { Route as CriancasIndexRouteImport } from './routes/criancas/index'
@@ -27,6 +35,11 @@ import { Route as CriancasNovoRouteImport } from './routes/criancas/novo'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AjudaRoute = AjudaRouteImport.update({
+  id: '/ajuda',
+  path: '/ajuda',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChamadasRoute = ChamadasRouteImport.update({
@@ -44,9 +57,24 @@ const ConfiguracoesRoute = ConfiguracoesRouteImport.update({
   path: '/configuracoes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ContatoRoute = ContatoRouteImport.update({
+  id: '/contato',
+  path: '/contato',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CrachasRoute = CrachasRouteImport.update({
   id: '/crachas',
   path: '/crachas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EntrarRoute = EntrarRouteImport.update({
+  id: '/entrar',
+  path: '/entrar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExclusaoDeContaRoute = ExclusaoDeContaRouteImport.update({
+  id: '/exclusao-de-conta',
+  path: '/exclusao-de-conta',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FamiliasRoute = FamiliasRouteImport.update({
@@ -54,9 +82,24 @@ const FamiliasRoute = FamiliasRouteImport.update({
   path: '/familias',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LgpdRoute = LgpdRouteImport.update({
+  id: '/lgpd',
+  path: '/lgpd',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NotificacoesRoute = NotificacoesRouteImport.update({
   id: '/notificacoes',
   path: '/notificacoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlanosRoute = PlanosRouteImport.update({
+  id: '/planos',
+  path: '/planos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacidadeRoute = PrivacidadeRouteImport.update({
+  id: '/privacidade',
+  path: '/privacidade',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RegistrarRoute = RegistrarRouteImport.update({
@@ -67,6 +110,11 @@ const RegistrarRoute = RegistrarRouteImport.update({
 const RelatoriosRoute = RelatoriosRouteImport.update({
   id: '/relatorios',
   path: '/relatorios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermosDeUsoRoute = TermosDeUsoRouteImport.update({
+  id: '/termos-de-uso',
+  path: '/termos-de-uso',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TurmasRoute = TurmasRouteImport.update({
@@ -97,14 +145,22 @@ const CriancasNovoRoute = CriancasNovoRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/ajuda': typeof AjudaRoute
   '/chamadas': typeof ChamadasRoute
   '/checkin': typeof CheckinRoute
   '/configuracoes': typeof ConfiguracoesRoute
+  '/contato': typeof ContatoRoute
   '/crachas': typeof CrachasRoute
+  '/entrar': typeof EntrarRoute
+  '/exclusao-de-conta': typeof ExclusaoDeContaRoute
   '/familias': typeof FamiliasRoute
+  '/lgpd': typeof LgpdRoute
   '/notificacoes': typeof NotificacoesRoute
+  '/planos': typeof PlanosRoute
+  '/privacidade': typeof PrivacidadeRoute
   '/registrar': typeof RegistrarRoute
   '/relatorios': typeof RelatoriosRoute
+  '/termos-de-uso': typeof TermosDeUsoRoute
   '/turmas': typeof TurmasRoute
   '/usuarios': typeof UsuariosRoute
   '/criancas/$id': typeof CriancasIdRoute
@@ -113,14 +169,22 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/ajuda': typeof AjudaRoute
   '/chamadas': typeof ChamadasRoute
   '/checkin': typeof CheckinRoute
   '/configuracoes': typeof ConfiguracoesRoute
+  '/contato': typeof ContatoRoute
   '/crachas': typeof CrachasRoute
+  '/entrar': typeof EntrarRoute
+  '/exclusao-de-conta': typeof ExclusaoDeContaRoute
   '/familias': typeof FamiliasRoute
+  '/lgpd': typeof LgpdRoute
   '/notificacoes': typeof NotificacoesRoute
+  '/planos': typeof PlanosRoute
+  '/privacidade': typeof PrivacidadeRoute
   '/registrar': typeof RegistrarRoute
   '/relatorios': typeof RelatoriosRoute
+  '/termos-de-uso': typeof TermosDeUsoRoute
   '/turmas': typeof TurmasRoute
   '/usuarios': typeof UsuariosRoute
   '/criancas/$id': typeof CriancasIdRoute
@@ -130,14 +194,22 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/ajuda': typeof AjudaRoute
   '/chamadas': typeof ChamadasRoute
   '/checkin': typeof CheckinRoute
   '/configuracoes': typeof ConfiguracoesRoute
+  '/contato': typeof ContatoRoute
   '/crachas': typeof CrachasRoute
+  '/entrar': typeof EntrarRoute
+  '/exclusao-de-conta': typeof ExclusaoDeContaRoute
   '/familias': typeof FamiliasRoute
+  '/lgpd': typeof LgpdRoute
   '/notificacoes': typeof NotificacoesRoute
+  '/planos': typeof PlanosRoute
+  '/privacidade': typeof PrivacidadeRoute
   '/registrar': typeof RegistrarRoute
   '/relatorios': typeof RelatoriosRoute
+  '/termos-de-uso': typeof TermosDeUsoRoute
   '/turmas': typeof TurmasRoute
   '/usuarios': typeof UsuariosRoute
   '/criancas/$id': typeof CriancasIdRoute
@@ -148,14 +220,22 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/ajuda'
     | '/chamadas'
     | '/checkin'
     | '/configuracoes'
+    | '/contato'
     | '/crachas'
+    | '/entrar'
+    | '/exclusao-de-conta'
     | '/familias'
+    | '/lgpd'
     | '/notificacoes'
+    | '/planos'
+    | '/privacidade'
     | '/registrar'
     | '/relatorios'
+    | '/termos-de-uso'
     | '/turmas'
     | '/usuarios'
     | '/criancas/$id'
@@ -164,14 +244,22 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/ajuda'
     | '/chamadas'
     | '/checkin'
     | '/configuracoes'
+    | '/contato'
     | '/crachas'
+    | '/entrar'
+    | '/exclusao-de-conta'
     | '/familias'
+    | '/lgpd'
     | '/notificacoes'
+    | '/planos'
+    | '/privacidade'
     | '/registrar'
     | '/relatorios'
+    | '/termos-de-uso'
     | '/turmas'
     | '/usuarios'
     | '/criancas/$id'
@@ -180,14 +268,22 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/ajuda'
     | '/chamadas'
     | '/checkin'
     | '/configuracoes'
+    | '/contato'
     | '/crachas'
+    | '/entrar'
+    | '/exclusao-de-conta'
     | '/familias'
+    | '/lgpd'
     | '/notificacoes'
+    | '/planos'
+    | '/privacidade'
     | '/registrar'
     | '/relatorios'
+    | '/termos-de-uso'
     | '/turmas'
     | '/usuarios'
     | '/criancas/$id'
@@ -197,14 +293,22 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AjudaRoute: typeof AjudaRoute
   ChamadasRoute: typeof ChamadasRoute
   CheckinRoute: typeof CheckinRoute
   ConfiguracoesRoute: typeof ConfiguracoesRoute
+  ContatoRoute: typeof ContatoRoute
   CrachasRoute: typeof CrachasRoute
+  EntrarRoute: typeof EntrarRoute
+  ExclusaoDeContaRoute: typeof ExclusaoDeContaRoute
   FamiliasRoute: typeof FamiliasRoute
+  LgpdRoute: typeof LgpdRoute
   NotificacoesRoute: typeof NotificacoesRoute
+  PlanosRoute: typeof PlanosRoute
+  PrivacidadeRoute: typeof PrivacidadeRoute
   RegistrarRoute: typeof RegistrarRoute
   RelatoriosRoute: typeof RelatoriosRoute
+  TermosDeUsoRoute: typeof TermosDeUsoRoute
   TurmasRoute: typeof TurmasRoute
   UsuariosRoute: typeof UsuariosRoute
   CriancasIdRoute: typeof CriancasIdRoute
@@ -219,6 +323,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ajuda': {
+      id: '/ajuda'
+      path: '/ajuda'
+      fullPath: '/ajuda'
+      preLoaderRoute: typeof AjudaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/chamadas': {
@@ -242,11 +353,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConfiguracoesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/contato': {
+      id: '/contato'
+      path: '/contato'
+      fullPath: '/contato'
+      preLoaderRoute: typeof ContatoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/crachas': {
       id: '/crachas'
       path: '/crachas'
       fullPath: '/crachas'
       preLoaderRoute: typeof CrachasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/entrar': {
+      id: '/entrar'
+      path: '/entrar'
+      fullPath: '/entrar'
+      preLoaderRoute: typeof EntrarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/exclusao-de-conta': {
+      id: '/exclusao-de-conta'
+      path: '/exclusao-de-conta'
+      fullPath: '/exclusao-de-conta'
+      preLoaderRoute: typeof ExclusaoDeContaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/familias': {
@@ -256,11 +388,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FamiliasRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lgpd': {
+      id: '/lgpd'
+      path: '/lgpd'
+      fullPath: '/lgpd'
+      preLoaderRoute: typeof LgpdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/notificacoes': {
       id: '/notificacoes'
       path: '/notificacoes'
       fullPath: '/notificacoes'
       preLoaderRoute: typeof NotificacoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/planos': {
+      id: '/planos'
+      path: '/planos'
+      fullPath: '/planos'
+      preLoaderRoute: typeof PlanosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacidade': {
+      id: '/privacidade'
+      path: '/privacidade'
+      fullPath: '/privacidade'
+      preLoaderRoute: typeof PrivacidadeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/registrar': {
@@ -275,6 +428,13 @@ declare module '@tanstack/react-router' {
       path: '/relatorios'
       fullPath: '/relatorios'
       preLoaderRoute: typeof RelatoriosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/termos-de-uso': {
+      id: '/termos-de-uso'
+      path: '/termos-de-uso'
+      fullPath: '/termos-de-uso'
+      preLoaderRoute: typeof TermosDeUsoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/turmas': {
@@ -317,14 +477,22 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AjudaRoute: AjudaRoute,
   ChamadasRoute: ChamadasRoute,
   CheckinRoute: CheckinRoute,
   ConfiguracoesRoute: ConfiguracoesRoute,
+  ContatoRoute: ContatoRoute,
   CrachasRoute: CrachasRoute,
+  EntrarRoute: EntrarRoute,
+  ExclusaoDeContaRoute: ExclusaoDeContaRoute,
   FamiliasRoute: FamiliasRoute,
+  LgpdRoute: LgpdRoute,
   NotificacoesRoute: NotificacoesRoute,
+  PlanosRoute: PlanosRoute,
+  PrivacidadeRoute: PrivacidadeRoute,
   RegistrarRoute: RegistrarRoute,
   RelatoriosRoute: RelatoriosRoute,
+  TermosDeUsoRoute: TermosDeUsoRoute,
   TurmasRoute: TurmasRoute,
   UsuariosRoute: UsuariosRoute,
   CriancasIdRoute: CriancasIdRoute,

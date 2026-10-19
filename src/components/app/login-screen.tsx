@@ -139,7 +139,7 @@ function AuthLayout({
           </div>
           {back && (
             <Link
-              to="/"
+              to="/entrar"
               className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-white/80 transition hover:bg-white/10 hover:text-white"
             >
               <ArrowLeft className="size-3.5" /> Voltar ao login
@@ -181,7 +181,7 @@ function AuthLayout({
             </div>
             {back && (
               <Link
-                to="/"
+                to="/entrar"
                 className="text-xs font-medium text-muted-foreground hover:text-foreground"
               >
                 Voltar ao login
@@ -773,7 +773,7 @@ export function RegisterScreen() {
       </Tabs>
       <p className="mt-6 text-center text-xs text-muted-foreground">
         Já tem conta?{" "}
-        <Link to="/" className="font-semibold text-primary hover:underline">
+        <Link to="/entrar" className="font-semibold text-primary hover:underline">
           Entrar
         </Link>
       </p>
