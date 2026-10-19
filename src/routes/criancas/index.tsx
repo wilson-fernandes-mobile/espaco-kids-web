@@ -34,6 +34,8 @@ export const Route = createFileRoute("/criancas/")({
   component: ChildrenPage,
 });
 
+const filterCls = selectCls.replace("w-full", "w-auto") + " shrink-0";
+
 function ChildrenPage() {
   const { state, role, loading } = useStore();
   const nav = useNavigate();
@@ -99,7 +101,7 @@ function ChildrenPage() {
       />
       <ErrorBanner />
       <div className="card-surface">
-        <div className="flex flex-wrap gap-2 border-b p-4">
+        <div className="flex flex-wrap gap-2 border-b p-4 lg:flex-nowrap">
           <SearchBox
             value={q}
             onChange={setQ}
@@ -107,7 +109,7 @@ function ChildrenPage() {
           />
           <select
             aria-label="Turma"
-            className={selectCls + " w-auto"}
+            className={filterCls}
             value={cls}
             onChange={(e) => setCls(e.target.value)}
           >
@@ -120,7 +122,7 @@ function ChildrenPage() {
           </select>
           <select
             aria-label="Idade"
-            className={selectCls + " w-auto"}
+            className={filterCls}
             value={age}
             onChange={(e) => setAge(e.target.value)}
           >
@@ -132,7 +134,7 @@ function ChildrenPage() {
           </select>
           <select
             aria-label="Situação"
-            className={selectCls + " w-auto"}
+            className={filterCls}
             value={sit}
             onChange={(e) => setSit(e.target.value)}
           >
