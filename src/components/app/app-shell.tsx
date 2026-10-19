@@ -21,13 +21,6 @@ import {
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -283,7 +276,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
-  const { role, currentUser, unit, setUnit, state } = useStore();
+  const { role, currentUser, state } = useStore();
   const { signOut, openChurchPicker, churchName, memberships } = useAuth();
   // Cor da igreja (Configurações): aplica ao entrar e volta ao padrão ao sair.
   useEffect(() => {
@@ -344,18 +337,6 @@ export function AppShell({ children }: { children: ReactNode }) {
               <p className="hidden truncate font-semibold md:block">
                 {state.settings.name}
               </p>
-              <Select value={unit} onValueChange={setUnit}>
-                <SelectTrigger className="h-9 w-auto max-w-[190px] gap-2 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {state.settings.units.map((u) => (
-                    <SelectItem key={u} value={u}>
-                      {u}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
             <div className="flex shrink-0 items-center gap-2">
               <Link

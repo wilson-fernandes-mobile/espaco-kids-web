@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
-import { Check, Image as ImageIcon, Loader2, Plus, Save, Trash2 } from "lucide-react";
+import { Check, Image as ImageIcon, Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { useStore } from "@/lib/store";
 import { can } from "@/lib/domain/rules";
@@ -65,7 +65,6 @@ function SettingsPage() {
   const [d, setD] = useState<ChurchSettings>(state.settings);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [newUnit, setNewUnit] = useState("");
 
   useEffect(() => {
     if (!dirty) setD(state.settings);
@@ -133,7 +132,6 @@ function SettingsPage() {
         <TabsList className="mb-4 h-auto flex-wrap">
           {[
             ["igreja", "Igreja"],
-            ["unidades", "Unidades"],
             ["cracha", "Crachás"],
             ["regras", "Regras"],
             ["notif", "Notificações"],
@@ -263,66 +261,6 @@ function SettingsPage() {
                   )}
                 </div>
               </Field>
-            </Section>
-          </Panel>
-        </TabsContent>
-
-        <TabsContent value="unidades">
-          <Panel title="Unidades e ambientes">
-            <Section>
-              <ul className="divide-y rounded-lg border">
-                {d.units.map((u, i) => (
-                  <li key={i} className="flex items-center gap-2 p-2">
-                    <Input
-                      value={u}
-                      aria-label={`Unidade ${i + 1}`}
-                      onChange={(e) =>
-                        set(
-                          "units",
-                          d.units.map((x, j) => (j === i ? e.target.value : x)),
-                        )
-                      }
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label="Remover unidade"
-                      disabled={d.units.length === 1}
-                      onClick={() =>
-                        set(
-                          "units",
-                          d.units.filter((_, j) => j !== i),
-                        )
-                      }
-                    >
-                      <Trash2 />
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-              <form
-                className="flex gap-2"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (newUnit.trim()) {
-                    set("units", [...d.units, newUnit.trim()]);
-                    setNewUnit("");
-                  }
-                }}
-              >
-                <Input
-                  value={newUnit}
-                  onChange={(e) => setNewUnit(e.target.value)}
-                  placeholder="Nova unidade ou congregação"
-                />
-                <Button type="submit" variant="outline">
-                  <Plus /> Adicionar
-                </Button>
-              </form>
-              <p className="text-xs text-muted-foreground">
-                Salas e ambientes são configurados em cada turma (menu Turmas e
-                salas).
-              </p>
             </Section>
           </Panel>
         </TabsContent>
