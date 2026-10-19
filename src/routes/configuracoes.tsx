@@ -30,6 +30,9 @@ import type { ChurchSettings } from "@/lib/domain/types";
 
 export const Route = createFileRoute("/configuracoes")({
   head: () => ({ meta: [{ title: "Configurações da igreja — Espaço Kids" }] }),
+  validateSearch: (s: Record<string, unknown>): { aba?: string } => ({
+    aba: typeof s.aba === "string" ? s.aba : undefined,
+  }),
   component: SettingsPage,
 });
 
@@ -66,6 +69,11 @@ function SettingsPage() {
   const [d, setD] = useState<ChurchSettings>(state.settings);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
+  const { aba } = Route.useSearch();
+  const [tab, setTab] = useState(aba ?? "igreja");
+  useEffect(() => {
+    if (aba) setTab(aba);
+  }, [aba]);
 
   useEffect(() => {
     if (!dirty) setD(state.settings);
@@ -129,7 +137,7 @@ function SettingsPage() {
         }
       />
       <ErrorBanner />
-      <Tabs defaultValue="igreja">
+      <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="mb-4 h-auto flex-wrap">
           {[
             ["igreja", "Igreja"],
@@ -281,16 +289,57 @@ function SettingsPage() {
                     ` · teste grátis termina em ${plan.trialDaysLeft} ${plan.trialDaysLeft === 1 ? "dia" : "dias"}`}
                 </p>
               </div>
-              <ul className="grid gap-2 sm:grid-cols-2">
-                {PLANS.map((p) => (
-                  <li key={p.name} className="rounded-lg border p-3 text-sm">
-                    <p className="font-semibold">
-                      {p.name} · {p.price}
-                      {p.suffix}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{p.limit}</p>
-                  </li>
-                ))}
+              <ul className="grid gap-3 sm:grid-cols-2">
+                {PLANS.map((p) => {
+                  const atual = plan.mode !== "teste" && p.name === plan.name;
+                  return (
+                    <li
+                      key={p.name}
+                      className={`flex flex-col gap-2 rounded-lg border p-4 text-sm ${atual ? "border-primary bg-primary-soft/50" : ""}`}
+                    >
+                      <div>
+                        <p className="font-semibold">
+                          {p.name}
+                          {atual && (
+                            <span className="ml-2 text-xs font-normal text-primary">
+                              plano atual
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-lg font-bold">
+                          {p.price}
+                          <span className="text-xs font-normal text-muted-foreground">
+                            {p.suffix}
+                          </span>
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {p.limit}
+                        </p>
+                      </div>
+                      <ul className="space-y-1 text-xs">
+                        {p.features.map((f) => (
+                          <li key={f} className="flex items-start gap-1.5">
+                            <Check className="mt-0.5 size-3 shrink-0 text-primary" />
+                            {f}
+                          </li>
+                        ))}
+                      </ul>
+                      {!atual && p.price !== "Grátis" && (
+                        <Button
+                          size="sm"
+                          className="mt-auto"
+                          onClick={() =>
+                            toast.info(
+                              "O pagamento online chega em breve. Fale com a gente para assinar agora.",
+                            )
+                          }
+                        >
+                          Assinar {p.name}
+                        </Button>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
               <p className="text-xs text-muted-foreground">
                 A assinatura online está chegando. Por enquanto, fale com a

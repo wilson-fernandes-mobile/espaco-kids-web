@@ -3,6 +3,16 @@ import { AppLogo } from "@/components/app/app-logo";
 import { doc, onSnapshot } from "firebase/firestore";
 import { Church, KeyRound, Loader2, LogOut, Plus, Smartphone } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -59,6 +69,7 @@ export function ChurchPicker() {
   const [code, setCode] = useState("");
   const [role, setRole] = useState<"professor" | "recepcao">("professor");
   const [name, setName] = useState("");
+  const [confirmCreate, setConfirmCreate] = useState(false);
   const [busy, setBusy] = useState<"join" | "create" | "extra" | null>(null);
   // Ação extra numa igreja da lista: virar voluntário (família) ou vincular a família (equipe).
   const [extra, setExtra] = useState<{
@@ -100,7 +111,11 @@ export function ChurchPicker() {
       setBusy(null);
     }
   };
+  const nomeIgual = memberships.find(
+    (m) => m.churchName.trim().toLowerCase() === name.trim().toLowerCase(),
+  );
   const create = async () => {
+    setConfirmCreate(false);
     setBusy("create");
     try {
       await createChurch(name);
@@ -266,13 +281,36 @@ export function ChurchPicker() {
           </div>
           <Button
             variant="outline"
-            onClick={create}
+            onClick={() => setConfirmCreate(true)}
             disabled={busy !== null || name.trim().length < 3}
           >
             {busy === "create" && <Loader2 className="animate-spin" />} Criar
             igreja
           </Button>
         </div>
+
+        <AlertDialog open={confirmCreate} onOpenChange={setConfirmCreate}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Criar a igreja “{name.trim()}”?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Será uma igreja nova e vazia, e você será o administrador dela. Suas
+                outras igrejas continuam como estão, e a nova não herda crianças,
+                famílias nem equipe de nenhuma delas. Para entrar numa igreja que já
+                existe, cancele e use o código de convite.
+                {nomeIgual && (
+                  <span className="mt-2 block font-medium text-foreground">
+                    Atenção: você já participa de uma igreja chamada “{nomeIgual.churchName}”.
+                  </span>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={create}>Sim, criar igreja</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <div className="text-center">
           <Button variant="ghost" onClick={() => signOut()}>

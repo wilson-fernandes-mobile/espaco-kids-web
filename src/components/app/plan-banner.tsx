@@ -33,6 +33,7 @@ export function PlanBanner() {
       {role === "admin" && (
         <Link
           to="/configuracoes"
+          search={{ aba: "plano" }}
           className="font-semibold text-primary hover:underline"
         >
           Ver planos
