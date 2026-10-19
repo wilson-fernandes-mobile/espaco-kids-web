@@ -19,6 +19,7 @@ import {
   Church,
   LogOut,
 } from "lucide-react";
+import { PlanBanner } from "@/components/app/plan-banner";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import {
   DropdownMenu,
@@ -383,7 +384,9 @@ export function AppShell({ children }: { children: ReactNode }) {
                       <span className="block truncate">Trocar de igreja</span>
                       <span className="block truncate text-[11px] text-muted-foreground">
                         {churchName}
-                        {memberships.length > 1 ? ` · ${memberships.length} igrejas` : ""}
+                        {memberships.length > 1
+                          ? ` · ${memberships.length} igrejas`
+                          : ""}
                       </span>
                     </span>
                   </DropdownMenuItem>
@@ -395,6 +398,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
           </header>
           <main className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:py-8">
+            <PlanBanner />
             {children}
           </main>
         </div>

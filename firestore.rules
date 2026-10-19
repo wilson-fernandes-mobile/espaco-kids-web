@@ -77,8 +77,16 @@ service cloud.firestore {
       allow list: if false;
       // Qualquer pessoa autenticada pode criar uma igreja (vira o admin dela).
       allow create: if signedIn() && request.resource.data.createdBy == request.auth.uid;
-      allow update: if isAdmin(churchId);
+      // A data de criação define o fim do teste grátis: ninguém a altera.
+      allow update: if isAdmin(churchId)
+        && request.resource.data.get('createdAt', null) == resource.data.get('createdAt', null);
       allow delete: if false;
+
+      // Plano e cobrança: a equipe lê; só o servidor (Cloud Functions) escreve.
+      match /billing/{doc} {
+        allow read: if isStaff(churchId);
+        allow write: if false;
+      }
 
       // Vínculo de cada pessoa com esta igreja.
       match /members/{uid} {

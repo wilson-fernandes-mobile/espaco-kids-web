@@ -124,9 +124,11 @@ function TermosPage() {
           >
             Planos
           </a>
-          . Planos pagos têm 14 dias de teste. Não há fidelidade: o cancelamento
-          pode ser feito a qualquer momento, com efeito ao fim do período já
-          pago. Os preços podem ser reajustados mediante aviso prévio.
+          . Toda igreja nova tem 14 dias de teste, sem cartão; depois, continua
+          no plano Início (grátis) ou assina um plano pago. Não há fidelidade: o
+          cancelamento pode ser feito a qualquer momento, com efeito ao fim do
+          período já pago. Os preços podem ser reajustados mediante aviso
+          prévio.
         </p>
       </LegalSection>
 

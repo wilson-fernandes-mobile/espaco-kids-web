@@ -1,8 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { Check, Image as ImageIcon, Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { useStore } from "@/lib/store";
+import { PLANS } from "@/lib/site";
 import { can } from "@/lib/domain/rules";
 import { resizePhoto } from "@/lib/photo";
 import {
@@ -61,7 +62,7 @@ function Section({ children }: { children: ReactNode }) {
 }
 
 function SettingsPage() {
-  const { state, role, loading, saveSettings, seedDemo } = useStore();
+  const { state, role, loading, plan, saveSettings, seedDemo } = useStore();
   const [d, setD] = useState<ChurchSettings>(state.settings);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -132,6 +133,7 @@ function SettingsPage() {
         <TabsList className="mb-4 h-auto flex-wrap">
           {[
             ["igreja", "Igreja"],
+            ["plano", "Plano"],
             ["cracha", "Crachás"],
             ["regras", "Regras"],
             ["notif", "Notificações"],
@@ -261,6 +263,42 @@ function SettingsPage() {
                   )}
                 </div>
               </Field>
+            </Section>
+          </Panel>
+        </TabsContent>
+
+        <TabsContent value="plano">
+          <Panel title="Plano e assinatura">
+            <Section>
+              <div className="rounded-lg border p-4">
+                <p className="text-sm text-muted-foreground">Plano atual</p>
+                <p className="text-xl font-bold">{plan.name}</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {plan.used} de{" "}
+                  {Number.isFinite(plan.limit) ? plan.limit : "∞"} crianças
+                  ativas
+                  {plan.mode === "teste" &&
+                    ` · teste grátis termina em ${plan.trialDaysLeft} ${plan.trialDaysLeft === 1 ? "dia" : "dias"}`}
+                </p>
+              </div>
+              <ul className="grid gap-2 sm:grid-cols-2">
+                {PLANS.map((p) => (
+                  <li key={p.name} className="rounded-lg border p-3 text-sm">
+                    <p className="font-semibold">
+                      {p.name} · {p.price}
+                      {p.suffix}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{p.limit}</p>
+                  </li>
+                ))}
+              </ul>
+              <p className="text-xs text-muted-foreground">
+                A assinatura online está chegando. Por enquanto, fale com a
+                gente para contratar ou trocar de plano.
+              </p>
+              <Button asChild variant="outline">
+                <Link to="/contato">Falar com a gente</Link>
+              </Button>
             </Section>
           </Panel>
         </TabsContent>

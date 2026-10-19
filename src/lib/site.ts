@@ -33,7 +33,7 @@ export const PLANS: Plan[] = [
   },
   {
     name: "Crescimento",
-    price: "R$ 39,90",
+    price: "R$ 45,90",
     suffix: "/mês",
     limit: "Até 100 crianças",
     features: [
@@ -45,7 +45,7 @@ export const PLANS: Plan[] = [
   },
   {
     name: "Expansão",
-    price: "R$ 69,90",
+    price: "R$ 79,90",
     suffix: "/mês",
     limit: "Até 250 crianças",
     features: [
@@ -77,7 +77,7 @@ export const FAQ = [
   { q: "Existe fidelidade?", a: "Não. Você cancela quando quiser, sem multa." },
   {
     q: "Como funciona o teste?",
-    a: "O plano Início é grátis para sempre. Os planos pagos têm 14 dias de teste.",
+    a: "Toda igreja nova ganha 14 dias com os recursos do plano Expansão, sem cartão. Depois, você assina ou continua no plano Início, que é grátis até 30 crianças.",
   },
   {
     q: "Os pais precisam pagar alguma coisa?",

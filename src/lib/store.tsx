@@ -37,6 +37,7 @@ import {
 } from "firebase/auth";
 import { db, getSecondaryAuth, getSecondaryDb } from "./firebase/client";
 import { useAuth } from "./auth";
+import { resolvePlan, type BillingDoc, type PlanState } from "./billing";
 import { DEFAULT_SETTINGS, createSeed } from "./domain/mock";
 import {
   can,
@@ -78,6 +79,8 @@ interface Ctx {
   currentUser: string;
   unit: string;
   setUnit: (u: string) => void;
+  /** Plano da igreja (teste grátis, pago ou Início) e crianças ativas. */
+  plan: PlanState & { used: number };
   saveChild: (c: Save<Child, "code">) => Promise<Child>;
   saveCare: (childId: string, p: CareProfile, text: string) => Promise<void>;
   saveFamily: (f: Save<Family, "code">) => Promise<Family>;
@@ -159,6 +162,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [loaded, setLoaded] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [unit, setUnit] = useState("");
+  const [tenantCreated, setTenantCreated] = useState<string | undefined>();
+  const [billing, setBilling] = useState<BillingDoc | null>(null);
 
   // Assinaturas em tempo real, de acordo com o perfil (menor privilégio).
   useEffect(() => {
@@ -194,10 +199,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     watch("badges", tcol("badges"));
     watch(
       "attendance",
-      query(
-        tcol("attendance"),
-        where("checkInAt", ">=", daysAgo(400)),
-      ),
+      query(tcol("attendance"), where("checkInAt", ">=", daysAgo(400))),
     );
     watch(
       "calls",
@@ -205,11 +207,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     );
     watch(
       "notifications",
-      query(
-        tcol("notifications"),
-        orderBy("createdAt", "desc"),
-        limit(300),
-      ),
+      query(tcol("notifications"), orderBy("createdAt", "desc"), limit(300)),
     );
     if (can(role, "familias")) {
       watch("familyLinks", tcol("familyLinks"));
@@ -231,10 +229,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       watch("joinCodes", tcol("joinCodes"));
     }
     if (can(role, "saude")) {
-      watch(
-        "audit",
-        query(tcol("audit"), orderBy("at", "desc"), limit(300)),
-      );
+      watch("audit", query(tcol("audit"), orderBy("at", "desc"), limit(300)));
       unsubs.push(
         onSnapshot(
           tcol("health"),
@@ -254,6 +249,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         ),
       );
     }
+    // Plano: data de criação da igreja + doc de cobrança (só o servidor escreve).
+    unsubs.push(
+      onSnapshot(
+        doc(db(), "tenants", churchId),
+        (snap) => setTenantCreated(snap.get("createdAt") as string | undefined),
+        () => undefined,
+      ),
+      onSnapshot(
+        tdoc("billing", "current"),
+        (snap) =>
+          setBilling(snap.exists() ? (snap.data() as BillingDoc) : null),
+        () => setBilling(null),
+      ),
+    );
     unsubs.push(
       onSnapshot(
         tdoc("settings", "church"),
@@ -277,6 +286,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setHealth({});
       setCare({});
       setLoaded(new Set());
+      setTenantCreated(undefined);
+      setBilling(null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.id, profile?.active, role, churchId]);
@@ -306,6 +317,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }),
     [data, health, care],
   );
+  const used = state.children.filter((c) => c.status !== "inativo").length;
+  const plan = useMemo(
+    () => ({ ...resolvePlan(tenantCreated, billing), used }),
+    [tenantCreated, billing, used],
+  );
+  const planRef = useRef(plan);
+  planRef.current = plan;
   const stateRef = useRef(state);
   stateRef.current = state;
 
@@ -323,7 +341,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     getDoc(ref)
       .then((snap) => {
         const cur = (snap.data() ?? {}) as Record<string, unknown>;
-        const diff = Object.entries(want).some(([k, v]) => (cur[k] ?? null) !== v);
+        const diff = Object.entries(want).some(
+          ([k, v]) => (cur[k] ?? null) !== v,
+        );
         return diff ? updateDoc(ref, want) : undefined;
       })
       .catch(() => undefined);
@@ -397,6 +417,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       currentUser,
       unit,
       setUnit,
+      plan,
 
       saveChild: async (c) => {
         const { health: h, ...rest } = c as Save<Child, "code"> & {
@@ -410,6 +431,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           saved = { ...base, ...rest, health: h, id: c.id };
           await log(`Cadastro atualizado: ${c.fullName}`);
         } else {
+          const pl = planRef.current;
+          if (pl.used >= pl.limit)
+            throw new Error(
+              `Limite de ${pl.limit} crianças do plano ${pl.name} atingido. Assine um plano maior em Configurações > Plano.`,
+            );
           const ref = doc(tcol("children"));
           const prefix = stateRef.current.settings.idPrefix || "CR";
           const code = await runTransaction(d(), async (tx) => {
@@ -424,7 +450,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           await log(`Criança cadastrada: ${c.fullName}`);
         }
         if (can(role, "saude"))
-          await setDoc(tdoc("health", saved.id), { text: h ?? "" }, { merge: true });
+          await setDoc(
+            tdoc("health", saved.id),
+            { text: h ?? "" },
+            { merge: true },
+          );
         return saved;
       },
 
@@ -867,9 +897,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           themeColor: s.themeColor ?? "original",
           // Cópia legível por todo membro (o app e a troca de igreja mostram a logo).
           logoUrl: s.logoUrl ?? null,
-        }).catch(
-          () => undefined,
-        );
+        }).catch(() => undefined);
         await log("Configurações da igreja atualizadas");
       },
 
@@ -913,7 +941,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         await log("Dados de demonstração carregados");
       },
     };
-  }, [state, loading, error, role, currentUser, unit, uid, cid, churchName, log, notify]);
+  }, [
+    state,
+    loading,
+    error,
+    role,
+    currentUser,
+    unit,
+    plan,
+    uid,
+    cid,
+    churchName,
+    log,
+    notify,
+  ]);
 
   return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>;
 }
