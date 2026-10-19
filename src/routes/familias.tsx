@@ -1,3 +1,4 @@
+import { foldText } from "@/lib/utils";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -475,17 +476,24 @@ function FamiliesPage() {
   }>(null);
 
   const rows = useMemo(() => {
-    const t = q.trim().toLowerCase();
+    const t = foldText(q.trim());
+    // Nomes dos responsáveis e das crianças de cada família.
+    const people = new Map<string, string>();
+    const add = (familyId: string, name: string) =>
+      people.set(familyId, `${people.get(familyId) ?? ""} ${foldText(name)}`);
+    for (const g of state.guardians) add(g.familyId, g.fullName);
+    for (const c of state.children) add(c.familyId, c.fullName);
     return state.families
       .filter(
         (f) =>
           !t ||
-          f.name.toLowerCase().includes(t) ||
-          f.code.toLowerCase().includes(t) ||
-          f.phone.includes(t),
+          foldText(f.name).includes(t) ||
+          foldText(f.code).includes(t) ||
+          f.phone.includes(t) ||
+          (people.get(f.id) ?? "").includes(t),
       )
       .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
-  }, [state.families, q]);
+  }, [state.families, state.guardians, state.children, q]);
   const pg = usePagination(rows, 10);
 
   if (!can(role, "familias")) return <Restricted />;
@@ -517,7 +525,13 @@ function FamiliesPage() {
     const authorized = state.authorized.filter((a) => a.familyId === fam.id);
     const kids = state.children.filter((c) => c.familyId === fam.id);
     // Autoriza/revoga a retirada de TODAS as crianças da família para uma pessoa.
-    const PickupControl = ({ personId, name }: { personId: string; name: string }) => {
+    const PickupControl = ({
+      personId,
+      name,
+    }: {
+      personId: string;
+      name: string;
+    }) => {
       if (kids.length === 0) return null;
       const n = kids.filter((k) => k.authorizedIds.includes(personId)).length;
       const all = n === kids.length;
@@ -541,11 +555,16 @@ function FamiliesPage() {
               variant="outline"
               size="sm"
               onClick={() =>
-                attempt(async () => {
-                  for (const k of kids)
-                    if (k.authorizedIds.includes(personId) === all)
-                      await toggleAuthorization(k.id, personId);
-                }, all ? `Retirada revogada para ${name}.` : `${name} pode retirar as crianças.`)
+                attempt(
+                  async () => {
+                    for (const k of kids)
+                      if (k.authorizedIds.includes(personId) === all)
+                        await toggleAuthorization(k.id, personId);
+                  },
+                  all
+                    ? `Retirada revogada para ${name}.`
+                    : `${name} pode retirar as crianças.`,
+                )
               }
             >
               {all ? <ShieldOff /> : <ShieldCheck />}
@@ -639,7 +658,11 @@ function FamiliesPage() {
                   <li key={g.id} className="py-4 first:pt-1 last:pb-1">
                     <div className="flex items-start gap-3">
                       <KidAvatar
-                        child={{ id: g.id, fullName: g.fullName, nickname: g.fullName }}
+                        child={{
+                          id: g.id,
+                          fullName: g.fullName,
+                          nickname: g.fullName,
+                        }}
                       />
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -673,7 +696,9 @@ function FamiliesPage() {
                             variant="ghost"
                             size="icon"
                             aria-label={`Editar ${g.fullName}`}
-                            onClick={() => setDlg({ kind: "guardian", item: g })}
+                            onClick={() =>
+                              setDlg({ kind: "guardian", item: g })
+                            }
                           >
                             <Pencil />
                           </Button>
@@ -711,7 +736,11 @@ function FamiliesPage() {
                     <li key={a.id} className="py-4 first:pt-1 last:pb-1">
                       <div className="flex items-start gap-3">
                         <KidAvatar
-                          child={{ id: a.id, fullName: a.fullName, nickname: a.fullName }}
+                          child={{
+                            id: a.id,
+                            fullName: a.fullName,
+                            nickname: a.fullName,
+                          }}
                         />
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -796,7 +825,7 @@ function FamiliesPage() {
           <SearchBox
             value={q}
             onChange={setQ}
-            placeholder="Buscar por nome, código ou telefone"
+            placeholder="Buscar por família, responsável, criança ou telefone"
           />
         </div>
         {rows.length === 0 ? (

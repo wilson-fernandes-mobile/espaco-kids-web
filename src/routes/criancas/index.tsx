@@ -1,6 +1,15 @@
+import { foldText } from "@/lib/utils";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Baby, Eye, HeartPulse, Pencil, Pill, QrCode, UserPlus } from "lucide-react";
+import {
+  Baby,
+  Eye,
+  HeartPulse,
+  Pencil,
+  Pill,
+  QrCode,
+  UserPlus,
+} from "lucide-react";
 import { useStore } from "@/lib/store";
 import { can, ageFrom, openAttendance } from "@/lib/domain/rules";
 import { CHILD_STATUS } from "@/lib/domain/labels";
@@ -45,14 +54,22 @@ function ChildrenPage() {
   const [sit, setSit] = useState("");
 
   const rows = useMemo(() => {
-    const term = q.trim().toLowerCase();
+    const term = foldText(q.trim());
+    // Nomes dos responsáveis de cada família, para buscar a criança por eles.
+    const guardiansOf = new Map<string, string>();
+    for (const g of state.guardians)
+      guardiansOf.set(
+        g.familyId,
+        `${guardiansOf.get(g.familyId) ?? ""} ${foldText(g.fullName)}`,
+      );
     return state.children
       .filter(
         (c) =>
           !term ||
-          c.fullName.toLowerCase().includes(term) ||
-          c.nickname.toLowerCase().includes(term) ||
-          c.code.toLowerCase().includes(term),
+          foldText(c.fullName).includes(term) ||
+          foldText(c.nickname).includes(term) ||
+          foldText(c.code).includes(term) ||
+          (guardiansOf.get(c.familyId) ?? "").includes(term),
       )
       .filter((c) => !cls || c.classId === cls)
       .filter((c) => {
@@ -105,7 +122,7 @@ function ChildrenPage() {
           <SearchBox
             value={q}
             onChange={setQ}
-            placeholder="Buscar por nome ou código (CR-1001)"
+            placeholder="Buscar por criança, responsável ou código"
           />
           <select
             aria-label="Turma"
