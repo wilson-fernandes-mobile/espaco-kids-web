@@ -74,6 +74,26 @@ function PlanosPage() {
             </div>
           ))}
         </div>
+        <div className="mt-6 flex flex-col items-center justify-between gap-4 rounded-2xl border bg-card p-6 sm:flex-row">
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">
+              Sob consulta
+            </p>
+            <p className="mt-1 text-lg font-bold">
+              Rede de igrejas ou mais de 500 crianças?
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Montamos um plano sob medida, com implantação e atendimento
+              dedicado.
+            </p>
+          </div>
+          <Link
+            to="/contato"
+            className="inline-flex shrink-0 justify-center rounded-lg border px-4 py-2.5 text-sm font-semibold hover:bg-secondary"
+          >
+            Falar com a gente
+          </Link>
+        </div>
         <p className="mt-6 text-center text-xs text-muted-foreground">
           Valores em reais, por igreja. Famílias e voluntários usam o app sem
           custo.

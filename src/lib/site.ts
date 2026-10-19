@@ -47,7 +47,7 @@ export const PLANS: Plan[] = [
     name: "Expansão",
     price: "R$ 69,90",
     suffix: "/mês",
-    limit: "Até 300 crianças",
+    limit: "Até 250 crianças",
     features: [
       "Tudo do Crescimento",
       "Avisos e notificações push",
@@ -58,9 +58,9 @@ export const PLANS: Plan[] = [
   },
   {
     name: "Ilimitado",
-    price: "R$ 129,90",
+    price: "R$ 149,90",
     suffix: "/mês",
-    limit: "Crianças ilimitadas",
+    limit: "Acima de 250 crianças",
     features: [
       "Tudo do Expansão",
       "Atendimento dedicado",

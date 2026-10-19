@@ -153,6 +153,20 @@ export function SitePage({ children }: { children: ReactNode }) {
   );
 }
 
+/** Faixa de marca: gradiente com bolas translúcidas (mesma identidade do app). */
+export const BRAND_BAND =
+  "relative overflow-hidden bg-gradient-to-br from-primary to-[oklch(0.72_0.16_263)] text-primary-foreground";
+
+export function Bubbles() {
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0">
+      <span className="absolute -right-20 -top-24 size-72 rounded-full bg-white/10" />
+      <span className="absolute -bottom-20 -left-14 size-52 rounded-full bg-white/[0.08]" />
+      <span className="absolute right-1/4 top-1/2 size-24 rounded-full bg-white/[0.06]" />
+    </div>
+  );
+}
+
 export function PageHero({
   eyebrow,
   title,
@@ -163,15 +177,16 @@ export function PageHero({
   subtitle?: ReactNode;
 }) {
   return (
-    <section className="bg-primary-soft/60 py-14">
-      <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
-        <span className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+    <section className={`${BRAND_BAND} py-14 sm:py-16`}>
+      <Bubbles />
+      <div className="relative mx-auto max-w-3xl px-4 text-center sm:px-6">
+        <span className="inline-flex rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
           {eyebrow}
         </span>
         <h1 className="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">
           {title}
         </h1>
-        {subtitle && <p className="mt-3 text-muted-foreground">{subtitle}</p>}
+        {subtitle && <p className="mt-3 opacity-90">{subtitle}</p>}
       </div>
     </section>
   );
@@ -242,14 +257,17 @@ export function CtaBand({
 }) {
   return (
     <section className="mx-auto max-w-3xl px-4 pb-12 sm:px-6">
-      <div className="rounded-3xl bg-primary p-8 text-center text-primary-foreground">
-        <h2 className="text-xl font-bold sm:text-2xl">{title}</h2>
+      <div className={`${BRAND_BAND} rounded-3xl p-8 text-center sm:p-10`}>
+        <Bubbles />
+        <h2 className="relative text-xl font-bold sm:text-2xl">{title}</h2>
         {subtitle && (
-          <p className="mx-auto mt-2 max-w-lg text-sm opacity-90">{subtitle}</p>
+          <p className="relative mx-auto mt-2 max-w-lg text-sm opacity-90">
+            {subtitle}
+          </p>
         )}
         <Link
           to={to}
-          className="mt-5 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-primary"
+          className="relative mt-5 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-primary"
         >
           {label} <ArrowRight className="size-4" />
         </Link>

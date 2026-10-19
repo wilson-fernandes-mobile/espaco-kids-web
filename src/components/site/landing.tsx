@@ -8,7 +8,12 @@ import {
   ShieldCheck,
   Users,
 } from "lucide-react";
-import { CtaBand, SitePage } from "@/components/site/site-layout";
+import {
+  Bubbles,
+  BRAND_BAND,
+  CtaBand,
+  SitePage,
+} from "@/components/site/site-layout";
 import { PLANS } from "@/lib/site";
 
 const FEATURES = [
@@ -62,33 +67,34 @@ const STEPS = [
 export function LandingPage() {
   return (
     <SitePage>
-      <section className="bg-primary-soft/60">
-        <div className="mx-auto max-w-4xl px-4 py-16 text-center sm:px-6 sm:py-24">
-          <span className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+      <section className={BRAND_BAND}>
+        <Bubbles />
+        <div className="relative mx-auto max-w-4xl px-4 py-16 text-center sm:px-6 sm:py-24">
+          <span className="inline-flex rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
             Gestão do ministério infantil
           </span>
           <h1 className="mt-5 text-4xl font-extrabold tracking-tight text-balance sm:text-5xl">
             Pais tranquilos, crianças seguras, equipe organizada.
           </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-lg text-muted-foreground">
+          <p className="mx-auto mt-5 max-w-2xl text-lg opacity-90">
             O Espaço Kids cuida da entrada e saída, das chamadas e da saúde de
             cada criança da sua igreja, no celular e no computador.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
               to="/registrar"
-              className="rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+              className="rounded-xl bg-white px-6 py-3 text-sm font-semibold text-primary shadow-lg hover:bg-white/90"
             >
               Criar conta grátis
             </Link>
             <Link
               to="/planos"
-              className="rounded-xl border bg-card px-6 py-3 text-sm font-semibold hover:bg-secondary"
+              className="rounded-xl border border-white/40 px-6 py-3 text-sm font-semibold hover:bg-white/10"
             >
               Ver planos
             </Link>
           </div>
-          <p className="mt-4 text-xs text-muted-foreground">
+          <p className="mt-4 text-xs opacity-80">
             Grátis até 30 crianças. Sem cartão de crédito.
           </p>
         </div>
@@ -162,6 +168,9 @@ export function LandingPage() {
           >
             Comparar os planos
           </Link>
+          <span className="mt-1 block text-xs text-muted-foreground">
+            Mais de 500 crianças ou rede de igrejas? Plano sob consulta.
+          </span>
         </p>
       </section>
 
