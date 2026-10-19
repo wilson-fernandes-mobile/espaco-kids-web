@@ -24,6 +24,13 @@ final childrenProvider = StreamProvider<List<Child>>((ref) {
   return repo.watchChildren();
 });
 
+/// Nomes dos responsáveis por família, só para a equipe (busca de crianças).
+final guardianNamesProvider = StreamProvider<Map<String, List<String>>>((ref) {
+  final user = ref.watch(sessionProvider).user;
+  if (user == null || user.isFamily) return Stream.value(const {});
+  return ref.watch(kidsRepositoryProvider).watchGuardianNames();
+});
+
 /// Filhos de uma família específica (cadastro feito pela própria família).
 final familyChildrenProvider = StreamProvider.family<List<Child>, String>(
   (ref, familyId) =>

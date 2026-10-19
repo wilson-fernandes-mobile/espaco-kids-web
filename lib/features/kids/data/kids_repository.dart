@@ -24,6 +24,21 @@ class KidsRepository {
               ..sort((a, b) => a.fullName.compareTo(b.fullName)),
       );
 
+  /// Nomes dos responsáveis de todas as famílias (busca da equipe), por família.
+  Stream<Map<String, List<String>>> watchGuardianNames() =>
+      _t.collection('guardians').snapshots().map((s) {
+        final out = <String, List<String>>{};
+        for (final d in s.docs) {
+          final m = d.data();
+          final fam = (m['familyId'] as String?) ?? '';
+          final name = (m['fullName'] as String?) ?? '';
+          if (fam.isNotEmpty && name.isNotEmpty) {
+            (out[fam] ??= []).add(name);
+          }
+        }
+        return out;
+      });
+
   Stream<List<Child>> watchFamilyChildren(String familyId) => _t
       .collection('children')
       .where('familyId', isEqualTo: familyId)

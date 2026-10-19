@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/utils/text_search.dart';
 import '../../../../shared/widgets/async_value_widget.dart';
 import '../../../../shared/widgets/child_tile.dart';
 import '../../../../shared/widgets/empty_state.dart';
@@ -33,8 +34,13 @@ class _ChildrenScreenState extends ConsumerState<ChildrenScreen> {
     _filter = ref.read(myRoomProvider) != null ? _Filter.mine : _Filter.all;
   }
 
-  List<Child> _apply(List<Child> all, Set<String> present, String? roomId) {
-    final q = _query.trim().toLowerCase();
+  List<Child> _apply(
+    List<Child> all,
+    Set<String> present,
+    String? roomId,
+    Map<String, List<String>> guardians,
+  ) {
+    final q = foldText(_query.trim());
     return all.where((c) {
       if (!c.active) return false;
       if (_filter == _Filter.mine && roomId != null && c.classId != roomId) {
@@ -44,9 +50,12 @@ class _ChildrenScreenState extends ConsumerState<ChildrenScreen> {
       if (_filter == _Filter.present && !isPresent) return false;
       if (_filter == _Filter.absent && isPresent) return false;
       if (q.isEmpty) return true;
-      return c.fullName.toLowerCase().contains(q) ||
-          c.nickname.toLowerCase().contains(q) ||
-          c.code.toLowerCase().contains(q);
+      return foldText(c.fullName).contains(q) ||
+          foldText(c.nickname).contains(q) ||
+          foldText(c.code).contains(q) ||
+          (guardians[c.familyId] ?? const []).any(
+            (g) => foldText(g).contains(q),
+          );
     }).toList();
   }
 
@@ -55,6 +64,7 @@ class _ChildrenScreenState extends ConsumerState<ChildrenScreen> {
     final present = ref.watch(presentIdsProvider);
     final children = ref.watch(childrenProvider);
     final room = ref.watch(myRoomProvider);
+    final guardians = ref.watch(guardianNamesProvider).valueOrNull ?? const {};
     // Sem check-in, o filtro "Minha sala" não existe (cai em "Todas").
     final filter =
         room == null && _filter == _Filter.mine ? _Filter.all : _filter;
@@ -76,7 +86,7 @@ class _ChildrenScreenState extends ConsumerState<ChildrenScreen> {
             ),
             child: TextField(
               decoration: const InputDecoration(
-                hintText: 'Buscar por nome ou código',
+                hintText: 'Buscar por criança, responsável ou código',
                 prefixIcon: Icon(Icons.search),
               ),
               onChanged: (v) => setState(() => _query = v),
@@ -109,7 +119,7 @@ class _ChildrenScreenState extends ConsumerState<ChildrenScreen> {
             child: AsyncValueWidget(
               value: children,
               data: (all) {
-                final list = _apply(all, present, room?.classId);
+                final list = _apply(all, present, room?.classId, guardians);
                 if (list.isEmpty) {
                   return const EmptyState(
                     icon: Icons.child_care,

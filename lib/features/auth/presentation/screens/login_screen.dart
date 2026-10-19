@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/services/local_preferences_service.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../shared/widgets/create_church_hint.dart';
 import '../../../../shared/widgets/feedback.dart';
 import '../providers/auth_providers.dart';
 import '../widgets/auth_shell.dart';
@@ -193,6 +194,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                 ],
               ),
+              const SizedBox(height: AppSpacing.md),
+              const CreateChurchHint(),
             ],
           ),
         ),

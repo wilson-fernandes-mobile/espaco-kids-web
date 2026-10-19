@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_role.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../shared/widgets/create_church_hint.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../../shared/widgets/feedback.dart';
 import '../../../../shared/widgets/status_badge.dart';
@@ -137,6 +138,8 @@ class ChurchSelectScreen extends ConsumerWidget {
             icon: const Icon(Icons.vpn_key_outlined),
             label: const Text('Entrar com um código'),
           ),
+          const SizedBox(height: AppSpacing.lg),
+          const CreateChurchHint(),
         ],
       ),
     );
