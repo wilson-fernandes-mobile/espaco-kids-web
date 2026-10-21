@@ -19,17 +19,19 @@ Console → **Authentication → Começar → Método de login → E-mail/senha 
 Sem isso o login mostra "Login por e-mail/senha não está habilitado".
 
 ## Primeiro uso
-1. `bun install` · `bun run dev` → http://localhost:5173
-2. Tela de login → **Criar cadastro → Cadastrar igreja** (só funciona uma vez).
-3. Em **Configurações → Dados**, carregue os dados fictícios (opcional) ou cadastre turmas e famílias.
-4. Em **Usuários e permissões**, gere o **código de convite** e passe para professores/recepção: eles usam **Criar cadastro → Entrar com código**. Coordenação e outros admins você cria direto na lista.
+1. `bun install` · `bun run dev` → http://localhost:8080
+2. Tela de login → **Criar cadastro** → criar a igreja (a pessoa vira admin dela). Cada igreja é independente (`tenants/{churchId}`).
+3. Em **Usuários e permissões**, gere o **código de convite** (`KIDS-`, professor/recepção) e o **código de entrada dos pais** (`IG-`). Coordenação e outros admins você cria direto na lista.
+4. Em **Configurações → Dados**, carregue dados fictícios (opcional) ou cadastre turmas.
 
 ## Publicar regras e índices
 ```powershell
 nvm use 22.14.0
-firebase deploy --only firestore --project espacokids-app
+firebase deploy --only firestore --project espacokids-app   # regras + índices
+firebase deploy --only functions --project espacokids-app   # Cloud Functions (Node 22)
+firebase deploy --only hosting --project espacokids-app     # após bun run build
 ```
-Sempre que alterar `firestore.rules` ou `firestore.indexes.json`.
+Rode o deploy de regras sempre que alterar `firestore.rules` ou `firestore.indexes.json`. Ao mudar o modelo de dados, publique regras e hosting juntos.
 
 ## Domínios autorizados
 Ao publicar o site, adicione o domínio em Authentication → Configurações → Domínios autorizados (`localhost` já vem liberado).

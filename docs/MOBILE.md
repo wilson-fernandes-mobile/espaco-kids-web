@@ -1,5 +1,7 @@
 # App mobile (Flutter) — mapeamento
 
+> Modelo atual é **multi-igreja**: os dados ficam em `tenants/{churchId}/...` e o papel é por igreja (ver `.claude/CONTEXTO.md`). Onde este arquivo citar coleções na raiz (`children`, `calls`…), leia como subcoleções de `tenants/{churchId}`.
+
 Projeto: `C:\Users\wilso\Documents\GIT_PESSOAL\espaco_kids` (pacote `com.mova.software.espaco.kids.espaco_kids`).
 Backend: **o mesmo projeto Firebase do painel web** (`espacokids-app`). Apps Android e iOS já registrados no Firebase; `lib/firebase_options.dart` já está preenchido.
 
@@ -18,9 +20,12 @@ Cada familiar cria a **própria conta** (um e-mail por pessoa) com o **código d
 
 ## Fluxos principais
 
-**Cadastro (sem aprovação, por código)** — `Criar conta com código`
-- Família → código `LK-XXXXXX` (gerado no painel web: *Famílias → família → Acesso ao aplicativo*).
+**Cadastro (sem aprovação, por código)** — `Criar conta`
+- Pais → código da igreja `IG-XXXXXX` (painel web: *Usuários → código de entrada dos pais*), depois assistente de 4 passos (`/cadastro-familia`: seus dados, filhos, quem pode buscar, código da família). A equipe não cadastra famílias.
+- Outro responsável da mesma família → código `LK-XXXXXX` (gerado pela própria família no app ou pela equipe).
 - Equipe → código `KIDS-XXXXXX` (painel web: *Usuários e permissões*), escolhendo Professor(a) ou Recepção.
+- Uma conta pode ter várias igrejas (`/igrejas`) e, na mesma igreja, acumular equipe e família.
+- Também é possível importar a família de outra igreja (`importFamily`) e excluir a conta pelo app (`deleteMyAccount`).
 
 **Entrada pela família**
 1. Pai/mãe toca **Estou chegando** → cria `checkinRequests` (pendente).
@@ -70,7 +75,7 @@ Regras de ouro: **telas não falam com o Firestore** (usam providers → reposit
 
 ## Dados e segurança (Firestore)
 
-Reaproveita as coleções do painel web (`children`, `families`, `guardians`, `authorized`, `classes`, `presence`, `attendance`, `calls`, `notifications`, `audit`, `badges`, `users`) e acrescenta:
+Reaproveita as coleções do painel web (subcoleções de `tenants/{churchId}`: `children`, `families`, `guardians`, `authorized`, `classes`, `presence`, `attendance`, `calls`, `notifications`, `audit`, `badges`, `members`, `health`) e acrescenta:
 
 | Coleção | Uso |
 |---|---|
@@ -79,7 +84,7 @@ Reaproveita as coleções do painel web (`children`, `families`, `guardians`, `a
 | `users/{uid}` (`role: responsavel`) | `familyId`, `linkCode`, `personId`/`personKind` (quem é na família) |
 | `calls.familyId` | permite à família ver as chamadas dos seus filhos |
 
-Regras (`firestore.rules`, já publicadas): a família só lê **os próprios filhos/pessoas/chamadas/presença**; nunca `health`, `settings`, `audit`, `users`, `badges`. Só pode criar pedido para filho da própria família, cancelar o próprio pedido pendente e marcar "estou indo" nas chamadas. `isStaff()` agora exclui o perfil `responsavel`.
+Regras (`firestore.rules`, já publicadas): a família só lê **os próprios filhos/pessoas/chamadas/presença** e lê/edita a `health` dos próprios filhos; nunca `settings`, `audit`, `badges` nem dados de outras famílias. Só pode criar pedido para filho da própria família, cancelar o próprio pedido pendente e marcar "estou indo" nas chamadas. `isStaff()` agora exclui o perfil `responsavel`.
 O painel web **não** abre para contas de família (mostra "acesso não liberado").
 
 ## Como rodar
@@ -92,7 +97,10 @@ flutter test           # regras de entrada/saída
 flutter analyze
 ```
 
-Antes do primeiro teste: habilitar **Authentication → E-mail/senha** (já feito para o web), gerar um **código de família** no painel e criar a conta no app.
+Antes do primeiro teste: habilitar **Authentication → E-mail/senha** (já feito), gerar o código `IG-` no painel e criar a conta no app.
+
+## Gerar versão (Play Store)
+**As chaves de assinatura não estão no git: peça ao responsável, no cofre, o `android/key.properties` e o `android/app/upload-keystore.jks`.** A Play exige AAB (`flutter build appbundle --release`) e `versionCode` maior que o último enviado. Passo a passo em `.claude/CONTEXTO.md`, seção 7.
 
 ## Fora do escopo desta fase (próximos passos)
 
