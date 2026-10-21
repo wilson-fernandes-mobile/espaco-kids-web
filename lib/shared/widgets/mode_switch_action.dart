@@ -34,7 +34,7 @@ class ModeSwitchAction extends ConsumerWidget {
           backgroundColor: scheme.primary.withValues(alpha: 0.10),
           side: BorderSide(color: scheme.primary.withValues(alpha: 0.35)),
           onPressed: () {
-            ref.read(familyModeProvider.notifier).state = !family;
+            ref.read(familyModeProvider.notifier).set(!family);
             context.go('/splash');
           },
         ),

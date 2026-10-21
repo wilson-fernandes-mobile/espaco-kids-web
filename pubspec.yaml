@@ -1,7 +1,7 @@
 name: espaco_kids
 description: "Espaço Kids — check-in e check-out seguro de crianças no ministério infantil (professores, recepção e famílias)."
 publish_to: 'none'
-version: 1.0.2+2
+version: 1.0.3+3
 
 environment:
   sdk: ^3.7.2
@@ -17,6 +17,7 @@ dependencies:
   firebase_core: ^3.8.0
   firebase_auth: ^5.3.3
   cloud_firestore: ^5.5.0
+  cloud_functions: ^5.1.4
   firebase_messaging: ^15.1.6
 
   # Login social

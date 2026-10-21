@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 import '../../../core/errors/failures.dart';
 import '../../../core/utils/date_format.dart';
@@ -34,9 +35,10 @@ class ChildDraft {
 /// Cadastro feito pela própria família: a pessoa entra com o código da igreja
 /// e registra a família, as crianças e quem pode buscá-las.
 class FamilyRepository {
-  FamilyRepository(this._db);
+  FamilyRepository(this._db, this._fn);
 
   final FirebaseFirestore _db;
+  final FirebaseFunctions _fn;
   final _rnd = Random.secure();
 
   DocumentReference<Map<String, dynamic>> _tenant(String churchId) =>
@@ -107,6 +109,50 @@ class FamilyRepository {
         familyId: fid,
         draft: child,
       );
+    }
+  }
+
+
+  /// Filhos da família noutra igreja (para escolher o que importar).
+  Future<List<Child>> childrenIn(String churchId, String familyId) async {
+    final s =
+        await _tenant(churchId)
+            .collection('children')
+            .where('familyId', isEqualTo: familyId)
+            .get();
+    return s.docs.map((d) => Child.fromMap(d.id, d.data())).toList();
+  }
+
+  /// Copia filhos (com responsáveis e autorizados) de outra igreja para esta.
+  /// Devolve quantos filhos foram copiados.
+  Future<int> importFamily({
+    required String fromChurchId,
+    required String toChurchId,
+    required List<String> childIds,
+    required bool includeHealth,
+  }) async {
+    try {
+      final r = await _fn.httpsCallable('importFamily').call({
+        'fromChurchId': fromChurchId,
+        'toChurchId': toChurchId,
+        'childIds': childIds,
+        'includeHealth': includeHealth,
+      });
+      return ((r.data as Map)['copied'] as num).toInt();
+    } on FirebaseFunctionsException catch (e) {
+      throw Failure(e.message ?? 'Não foi possível importar agora.');
+    }
+  }
+
+  /// Entra sozinho na família já importada por outro responsável (sem código).
+  Future<bool> claimFamilyLink(String churchId) async {
+    try {
+      final r = await _fn.httpsCallable('claimFamilyLink').call({
+        'churchId': churchId,
+      });
+      return (r.data as Map)['linked'] == true;
+    } on FirebaseFunctionsException {
+      return false;
     }
   }
 

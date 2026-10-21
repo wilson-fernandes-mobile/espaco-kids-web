@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/firebase/firebase_providers.dart';
+import '../../../../core/services/local_preferences_service.dart';
 import '../../../tenant/presentation/providers/tenant_providers.dart';
 import '../../data/auth_repository.dart';
 import '../../domain/entities/app_user.dart';
@@ -10,6 +11,7 @@ final authRepositoryProvider = Provider<AuthRepository>(
   (ref) => AuthRepository(
     ref.watch(firebaseAuthProvider),
     ref.watch(firestoreProvider),
+    ref.watch(functionsProvider),
   ),
 );
 
@@ -70,4 +72,30 @@ final sessionProvider = Provider<Session>((ref) {
 });
 
 /// `true` = equipe usando o app como família (só vale se tiver família vinculada).
-final familyModeProvider = StateProvider<bool>((ref) => false);
+/// Fica salvo por igreja neste aparelho: ao reabrir, volta ao último modo usado.
+class FamilyModeNotifier extends Notifier<bool> {
+  String? get _key {
+    final id = ref.read(currentMembershipProvider)?.churchId;
+    return id == null ? null : 'family_mode_$id';
+  }
+
+  @override
+  bool build() {
+    final id = ref.watch(currentMembershipProvider.select((m) => m?.churchId));
+    if (id == null) return false;
+    return ref.read(sharedPreferencesProvider).getBool('family_mode_$id') ??
+        false;
+  }
+
+  void set(bool family) {
+    state = family;
+    final key = _key;
+    if (key != null) {
+      ref.read(sharedPreferencesProvider).setBool(key, family);
+    }
+  }
+}
+
+final familyModeProvider = NotifierProvider<FamilyModeNotifier, bool>(
+  FamilyModeNotifier.new,
+);

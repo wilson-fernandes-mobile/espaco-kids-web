@@ -72,7 +72,7 @@ class AppDrawer extends ConsumerWidget {
                         : 'Modo família (meus filhos)',
                 onTap: () {
                   Navigator.of(context).pop();
-                  ref.read(familyModeProvider.notifier).state = !user.asFamily;
+                  ref.read(familyModeProvider.notifier).set(!user.asFamily);
                   context.go('/splash');
                 },
               )

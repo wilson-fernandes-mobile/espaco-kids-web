@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -23,10 +24,11 @@ const _googleIosClientId =
 /// (`tenants/{churchId}/members/{uid}`, ver `TenantRepository`); o cadastro
 /// por código também é feito lá.
 class AuthRepository {
-  AuthRepository(this._auth, this._db);
+  AuthRepository(this._auth, this._db, this._fn);
 
   final FirebaseAuth _auth;
   final FirebaseFirestore _db;
+  final FirebaseFunctions _fn;
 
   Stream<User?> authChanges() => _auth.authStateChanges();
 
@@ -218,6 +220,76 @@ class AuthRepository {
         '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
     final r = Random.secure();
     return List.generate(length, (_) => chars[r.nextInt(chars.length)]).join();
+  }
+
+  // ---- Exclusão da conta ----
+
+  /// Confirma a identidade de novo (o servidor só apaga com login de até 5
+  /// min). [password] vale para quem entra com e-mail e senha; Google e Apple
+  /// abrem a própria tela. false = cancelou.
+  Future<bool> reauthenticate({String? password}) async {
+    final user = _auth.currentUser;
+    if (user == null) throw const Failure('Entre na sua conta primeiro.');
+    final ids = linkedProviderIds;
+    try {
+      if (ids.contains('google.com')) {
+        final cred = await _googleCredential();
+        if (cred == null) return false;
+        await user.reauthenticateWithCredential(cred);
+      } else if (ids.contains('apple.com')) {
+        await user.reauthenticateWithProvider(
+          OAuthProvider('apple.com')..addScope('email'),
+        );
+      } else {
+        if (password == null || password.isEmpty) {
+          throw const Failure('Digite sua senha para confirmar.');
+        }
+        await user.reauthenticateWithCredential(
+          EmailAuthProvider.credential(
+            email: user.email ?? '',
+            password: password,
+          ),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'canceled' || e.code == 'unknown') return false;
+      if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
+        throw const Failure('Senha incorreta.');
+      }
+      throw _friendly(e);
+    }
+    return true;
+  }
+
+  /// Apaga a conta no servidor (vínculos, perfil e login). Com [deleteFamily],
+  /// apaga também a família e as crianças. Chame [reauthenticate] antes.
+  Future<void> deleteAccount({required bool deleteFamily}) async {
+    try {
+      await _fn.httpsCallable('deleteMyAccount').call({
+        'deleteFamily': deleteFamily,
+      });
+    } on FirebaseFunctionsException catch (e) {
+      final m = e.message ?? '';
+      if (m == 'reauth-required') {
+        throw const Failure(
+          'Confirme sua identidade de novo e tente outra vez.',
+        );
+      }
+      if (m.startsWith('admin-unico:')) {
+        throw Failure(
+          'Você é o único administrador de ${m.substring(12)}. Passe a '
+          'administração para outra pessoa antes de excluir a conta.',
+        );
+      }
+      throw const Failure('Não foi possível excluir agora. Tente de novo.');
+    }
+    // A conta já não existe no servidor: só limpa a sessão local.
+    try {
+      await GoogleSignIn().signOut().timeout(const Duration(seconds: 3));
+    } catch (_) {}
+    try {
+      await _auth.signOut();
+    } catch (_) {}
   }
 
   Future<void> resetPassword(String email) =>

@@ -4,7 +4,10 @@ import '../../../../core/firebase/firebase_providers.dart';
 import '../../data/family_repository.dart';
 
 final familyRepositoryProvider = Provider<FamilyRepository>(
-  (ref) => FamilyRepository(ref.watch(firestoreProvider)),
+  (ref) => FamilyRepository(
+    ref.watch(firestoreProvider),
+    ref.watch(functionsProvider),
+  ),
 );
 
 /// Código ativo da família (`LK-…`), se já foi gerado. Chave: (igreja, família).

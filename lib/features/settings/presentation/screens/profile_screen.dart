@@ -10,6 +10,8 @@ import '../../../../core/theme/theme_mode_provider.dart';
 import '../../../../shared/widgets/feedback.dart';
 import '../../../../shared/widgets/photo_field.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../tenant/presentation/providers/tenant_providers.dart';
+import '../widgets/delete_account_dialog.dart';
 import '../widgets/linked_accounts_section.dart';
 
 /// Perfil, aparência (tema/cor) e sair — compartilhado por todos os papéis.
@@ -21,6 +23,7 @@ class ProfileScreen extends ConsumerWidget {
     final user = ref.watch(sessionProvider).user!;
     final mode = ref.watch(themeModeProvider);
     final color = ref.watch(themeColorProvider);
+    final church = ref.watch(churchThemeColorProvider).valueOrNull;
 
     return Scaffold(
       appBar: AppBar(
@@ -81,7 +84,10 @@ class ProfileScreen extends ConsumerWidget {
                   onTap: () => ref.read(themeColorProvider.notifier).state = o,
                   child: CircleAvatar(
                     radius: 18,
-                    backgroundColor: primaryColorFor(o),
+                    // "Original" mostra a cor que a igreja definiu, que é a que o app usa.
+                    backgroundColor: primaryColorFor(
+                      o == ThemeColorOption.original ? (church ?? o) : o,
+                    ),
                     child:
                         o == color
                             ? const Icon(
@@ -110,6 +116,17 @@ class ProfileScreen extends ConsumerWidget {
             },
             icon: const Icon(Icons.logout),
             label: const Text('Sair'),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          TextButton.icon(
+            onPressed:
+                () =>
+                    showDeleteAccountDialog(context, hasFamily: user.hasFamily),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            icon: const Icon(Icons.delete_forever_outlined),
+            label: const Text('Excluir minha conta'),
           ),
         ],
       ),

@@ -12,7 +12,9 @@ import '../../../kids/domain/entities/person.dart';
 import '../../../kids/presentation/providers/kids_providers.dart';
 import '../providers/family_providers.dart';
 import '../widgets/child_form.dart';
+import '../../../tenant/presentation/providers/tenant_providers.dart';
 import '../widgets/family_code_card.dart';
+import '../widgets/import_family_sheet.dart';
 import '../widgets/person_form.dart';
 
 /// Primeiro acesso da família, em 4 passos curtos:
@@ -44,7 +46,25 @@ class _FamilySetupScreenState extends ConsumerState<FamilySetupScreen> {
     super.initState();
     // Se a família já foi criada (cadastro interrompido), segue do passo 2.
     final user = ref.read(sessionProvider).user;
-    if (user != null && user.hasFamily) _step = 1;
+    if (user != null && user.hasFamily) {
+      _step = 1;
+    } else if (user != null) {
+      _claimLink(user.churchId);
+    }
+  }
+
+  /// Se outro responsável já importou a família para esta igreja, entra nela
+  /// direto, sem precisar do código da família.
+  Future<void> _claimLink(String churchId) async {
+    final linked = await ref
+        .read(familyRepositoryProvider)
+        .claimFamilyLink(churchId);
+    if (!linked) return;
+    for (var i = 0; i < 30; i++) {
+      if (ref.read(sessionProvider).user?.hasFamily == true) break;
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    }
+    if (mounted) setState(() => _step = 1);
   }
 
   @override
@@ -84,7 +104,7 @@ class _FamilySetupScreenState extends ConsumerState<FamilySetupScreen> {
   void _finish() {
     final u = ref.read(sessionProvider).user;
     if (u != null && u.role.isStaff) {
-      ref.read(familyModeProvider.notifier).state = true;
+      ref.read(familyModeProvider.notifier).set(true);
     }
     context.go('/familia');
   }
@@ -222,6 +242,17 @@ class _FamilySetupScreenState extends ConsumerState<FamilySetupScreen> {
           ),
         ),
       const SizedBox(height: AppSpacing.sm),
+      if (importableChurches(
+        ref.watch(membershipsProvider).valueOrNull ?? const [],
+        ref.watch(sessionProvider).user?.churchId ?? '',
+      ).isNotEmpty) ...[
+        FilledButton.tonalIcon(
+          onPressed: () => showImportFamilySheet(context),
+          icon: const Icon(Icons.download_outlined),
+          label: const Text('Importar de outra igreja'),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+      ],
       OutlinedButton.icon(
         onPressed: () => showChildSheet(context),
         icon: const Icon(Icons.add),
