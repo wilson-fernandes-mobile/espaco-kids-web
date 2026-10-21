@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
   Link,
+  Navigate,
   createRootRouteWithContext,
   useRouter,
   useRouterState,
@@ -172,6 +173,7 @@ function Gate() {
     if (path === "/") return <LandingPage />;
     return path === "/registrar" ? <RegisterScreen /> : <LoginScreen />;
   }
+  if (path === "/entrar") return <Navigate to="/" replace />;
   if (status === "needs-church") return <ChurchPicker />;
   if (status === "no-profile" || status === "inactive")
     return <BlockedScreen kind={status} />;
