@@ -29,6 +29,16 @@ async function userDocsOf(memberDocs) {
   return (await db.getAll(...refs)).filter((d) => d.exists);
 }
 
+/** Remove tokens inválidos dos perfis. */
+async function pruneDead(res, tokens, owners) {
+  const dead = [];
+  res.responses.forEach((r, i) => {
+    const code = r.error && r.error.code;
+    if (code === "messaging/registration-token-not-registered" || code === "messaging/invalid-registration-token") dead.push(tokens[i]);
+  });
+  await Promise.all(dead.map((t) => owners.get(t).update({ fcmTokens: FieldValue.arrayRemove(t), alarmTokens: FieldValue.arrayRemove(t) })));
+}
+
 async function send(userDocs, payload) {
   const tokens = [];
   const owners = new Map();
@@ -46,16 +56,65 @@ async function send(userDocs, payload) {
     android: { priority: "high", notification: { channelId: "avisos" } },
     apns: { payload: { aps: { sound: "default" } } },
   });
-  // Remove tokens inválidos.
-  const dead = [];
-  res.responses.forEach((r, i) => {
-    const code = r.error && r.error.code;
-    if (code === "messaging/registration-token-not-registered" || code === "messaging/invalid-registration-token") dead.push(tokens[i]);
-  });
-  await Promise.all(dead.map((t) => owners.get(t).update({ fcmTokens: FieldValue.arrayRemove(t) })));
+  await pruneDead(res, tokens, owners);
 }
 
-exports.onCallCreated = onDocumentCreated({ document: "tenants/{churchId}/calls/{id}", region: REGION }, async (event) => {
+/**
+ * Alarme da chamada dos responsáveis. Aparelhos com o app novo (`alarmTokens`)
+ * recebem só `data` no Android: o app toca sirene e vibra até a pessoa tocar.
+ * No iPhone o aviso vai pelo APNs (time-sensitive). Os demais aparelhos
+ * recebem o aviso comum. Com `stop`, só manda o app parar o alarme.
+ */
+async function sendCallAlarm(userDocs, { title, body, data }, stop = false) {
+  const alarm = [];
+  const plain = [];
+  const owners = new Map();
+  for (const d of userDocs) {
+    const armed = new Set(d.get("alarmTokens") || []);
+    for (const t of d.get("fcmTokens") || []) {
+      owners.set(t, d.ref);
+      (armed.has(t) ? alarm : plain).push(t);
+    }
+  }
+  const m = getMessaging();
+  const jobs = [];
+  if (alarm.length) {
+    const msg = stop
+      ? { tokens: alarm, data: { ...data, type: "call-stop" }, android: { priority: "high" } }
+      : {
+          tokens: alarm,
+          data: { ...data, title, body },
+          android: { priority: "high", ttl: 5 * 60 * 1000 },
+          apns: {
+            headers: { "apns-priority": "10" },
+            payload: { aps: { alert: { title, body }, sound: "default", "interruption-level": "time-sensitive" } },
+          },
+        };
+    jobs.push(m.sendEachForMulticast(msg).then((res) => pruneDead(res, alarm, owners)));
+  }
+  if (plain.length && !stop) {
+    jobs.push(
+      m
+        .sendEachForMulticast({
+          tokens: plain,
+          notification: { title, body },
+          data,
+          android: { priority: "high", notification: { channelId: "avisos" } },
+          apns: { payload: { aps: { sound: "default" } } },
+        })
+        .then((res) => pruneDead(res, plain, owners)),
+    );
+  }
+  await Promise.all(jobs);
+}
+
+const ALARM_EVERY_MS = 30 * 1000;
+const ALARM_TRIES = 6; // ~3 min de insistência
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Fica insistindo (reenvia a cada 30 s) enquanto ninguém da família tocar em
+// "Estou indo"; ao confirmar, manda os outros aparelhos pararem o alarme.
+exports.onCallCreated = onDocumentCreated({ document: "tenants/{churchId}/calls/{id}", region: REGION, timeoutSeconds: 300 }, async (event) => {
   const call = event.data && event.data.data();
   if (!call || !call.familyId) return;
   const { churchId, id } = event.params;
@@ -66,13 +125,18 @@ exports.onCallCreated = onDocumentCreated({ document: "tenants/{churchId}/calls/
     church.collection("members").where("familyId", "==", call.familyId).get(),
   ]);
   const name = (child.exists && (child.get("nickname") || child.get("fullName"))) || "Seu filho";
-  await send(await userDocsOf(members.docs.filter((m) => m.get("active") === true)), {
-    notification: {
-      title: `${name} precisa de você`,
-      body: `${REASONS[call.reason] || REASONS.outro}${call.note ? ` — ${call.note}` : ""}`,
-    },
+  const users = await userDocsOf(members.docs.filter((m) => m.get("active") === true));
+  const msg = {
+    title: `${name} precisa de você`,
+    body: `${REASONS[call.reason] || REASONS.outro}${call.note ? ` — ${call.note}` : ""}`,
     data: { type: "call", callId: id, churchId },
-  });
+  };
+  for (let i = 0; i < ALARM_TRIES; i++) {
+    await sendCallAlarm(users, msg);
+    await sleep(ALARM_EVERY_MS);
+    if (event.data.ref && (await event.data.ref.get()).get("status") !== "pendente") break;
+  }
+  await sendCallAlarm(users, msg, true);
 });
 
 exports.onCheckinRequestCreated = onDocumentCreated({ document: "tenants/{churchId}/checkinRequests/{id}", region: REGION }, async (event) => {
