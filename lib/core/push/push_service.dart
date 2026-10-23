@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -5,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../firebase/firebase_providers.dart';
+import 'call_alarm.dart';
 
 /// Registra o token de push (FCM) do aparelho em `users/{uid}.fcmTokens`.
 /// As Cloud Functions (`functions/index.js`) usam esses tokens para avisar
@@ -14,6 +17,7 @@ class PushService {
 
   final FirebaseFirestore _db;
   String? _uid;
+  StreamSubscription<RemoteMessage>? _foreground;
 
   Future<void> register(String uid) async {
     try {
@@ -50,6 +54,8 @@ class PushService {
       }
       final token = await messaging.getToken();
       if (token == null) return;
+      // Chamada dos responsáveis com o app aberto: também vira alarme.
+      _foreground ??= FirebaseMessaging.onMessage.listen(CallAlarm.handle);
       _uid = uid;
       await _save(uid, token);
       messaging.onTokenRefresh.listen((t) {
@@ -64,19 +70,25 @@ class PushService {
 
   Future<void> unregister(String uid) async {
     _uid = null;
+    await _foreground?.cancel();
+    _foreground = null;
     try {
       final token = await FirebaseMessaging.instance.getToken();
       if (token == null) return;
       await _db.doc('users/$uid').update({
         'fcmTokens': FieldValue.arrayRemove([token]),
+        'alarmTokens': FieldValue.arrayRemove([token]),
       });
     } catch (e) {
       debugPrint('push: $e');
     }
   }
 
+  /// `alarmTokens` marca os aparelhos com a versão que sabe tocar o alarme da
+  /// chamada; os demais continuam recebendo o aviso comum.
   Future<void> _save(String uid, String token) => _db.doc('users/$uid').update({
     'fcmTokens': FieldValue.arrayUnion([token]),
+    'alarmTokens': FieldValue.arrayUnion([token]),
   });
 }
 
