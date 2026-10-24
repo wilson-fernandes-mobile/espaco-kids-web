@@ -362,6 +362,7 @@ class _KidCard extends ConsumerWidget {
                   name: child.fullName,
                   photo: child.photoUrl,
                   radius: 28,
+                  viewable: true,
                 ),
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
@@ -391,48 +392,56 @@ class _KidCard extends ConsumerWidget {
             ),
             const SizedBox(height: AppSpacing.md),
             // Onde está: um selo de status e, ao lado, a equipe da sala.
-            Row(
-              children: [
-                Flexible(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.sm + 4,
-                      vertical: AppSpacing.xs + 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color:
-                          present
-                              ? AppColors.success.withValues(alpha: 0.12)
-                              : scheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          present
-                              ? Icons.check_circle
-                              : Icons.meeting_room_outlined,
-                          size: 16,
-                          color: statusColor,
+            // Altura fixa: com ou sem equipe na sala, o selo não muda de lugar.
+            SizedBox(
+              height: 40,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.sm + 4,
+                          vertical: AppSpacing.xs + 2,
                         ),
-                        const SizedBox(width: AppSpacing.xs + 2),
-                        Flexible(
-                          child: Text(
-                            present
-                                ? 'Na sala desde ${hhmm(presence.at)}'
-                                : 'Fora da sala',
-                            overflow: TextOverflow.ellipsis,
-                            style: text.labelLarge?.copyWith(color: statusColor),
-                          ),
+                        decoration: BoxDecoration(
+                          color:
+                              present
+                                  ? AppColors.success.withValues(alpha: 0.12)
+                                  : scheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(999),
                         ),
-                      ],
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              present
+                                  ? Icons.check_circle
+                                  : Icons.meeting_room_outlined,
+                              size: 16,
+                              color: statusColor,
+                            ),
+                            const SizedBox(width: AppSpacing.xs + 2),
+                            Flexible(
+                              child: Text(
+                                present
+                                    ? 'Na sala desde ${hhmm(presence.at)}'
+                                    : 'Fora da sala',
+                                overflow: TextOverflow.ellipsis,
+                                style: text.labelLarge?.copyWith(
+                                  color: statusColor,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
-                ),
-                const Spacer(),
-                if (team.isNotEmpty) _RoomTeam(team: team),
-              ],
+                  if (team.isNotEmpty) _RoomTeam(team: team),
+                ],
+              ),
             ),
             const SizedBox(height: AppSpacing.md),
             // Ação principal (ou o pedido em andamento).

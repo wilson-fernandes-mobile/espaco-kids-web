@@ -167,6 +167,7 @@ class _Body extends ConsumerWidget {
                     name: child.fullName,
                     photo: child.photoUrl,
                     radius: 52,
+                    viewable: true,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),

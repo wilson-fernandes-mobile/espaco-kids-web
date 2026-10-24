@@ -12,11 +12,11 @@ import '../../../../shared/widgets/empty_state.dart';
 import '../../../kids/domain/entities/child.dart';
 import '../../../kids/presentation/providers/kids_providers.dart';
 
-enum _Filter { mine, absent }
+enum _Filter { all, mine, absent }
 
-/// Lista de crianças com busca. Com check-in numa sala, mostra só "Minha sala"
-/// (da turma e com check-in) e "Ausentes" (da turma, sem check-in). Sem check-in
-/// numa sala, mostra todas as crianças (útil para a recepção buscar).
+/// Lista de crianças com busca. Com check-in numa sala, há três filtros:
+/// "Todas", "Minha sala" (da turma e com check-in, abre por aqui) e "Ausentes"
+/// (da turma, sem check-in). Sem check-in numa sala, mostra todas as crianças.
 class ChildrenScreen extends ConsumerStatefulWidget {
   const ChildrenScreen({super.key});
 
@@ -37,7 +37,7 @@ class _ChildrenScreenState extends ConsumerState<ChildrenScreen> {
     final q = foldText(_query.trim());
     return all.where((c) {
       if (!c.active) return false;
-      if (roomId != null) {
+      if (roomId != null && _filter != _Filter.all) {
         if (c.classId != roomId) return false;
         final isPresent = present.contains(c.id);
         if (_filter == _Filter.mine && !isPresent) return false;
@@ -90,6 +90,7 @@ class _ChildrenScreenState extends ConsumerState<ChildrenScreen> {
                 children: [
                   for (final e
                       in {
+                        _Filter.all: 'Todas',
                         _Filter.mine: 'Minha sala',
                         _Filter.absent: 'Ausentes',
                       }.entries)

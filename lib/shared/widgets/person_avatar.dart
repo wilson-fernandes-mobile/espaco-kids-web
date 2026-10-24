@@ -15,6 +15,7 @@ class PersonAvatar extends StatelessWidget {
     this.photo,
     this.radius = 22,
     this.onGradient = false,
+    this.viewable = false,
   });
 
   final String name;
@@ -24,6 +25,9 @@ class PersonAvatar extends StatelessWidget {
   /// Para uso sobre fundo colorido/gradiente: iniciais brancas num círculo
   /// branco translúcido, em vez da cor determinística por pessoa.
   final bool onGradient;
+
+  /// Com foto, tocar abre a imagem em tela cheia (zoom por pinça).
+  final bool viewable;
 
   ImageProvider? _image() {
     final p = photo;
@@ -47,7 +51,7 @@ class PersonAvatar extends StatelessWidget {
     final color =
         AppColors.avatarPalette[name.hashCode.abs() %
             AppColors.avatarPalette.length];
-    return CircleAvatar(
+    final avatar = CircleAvatar(
       radius: radius,
       backgroundColor:
           onGradient
@@ -66,5 +70,73 @@ class PersonAvatar extends StatelessWidget {
                 ),
               ),
     );
+    if (!viewable || img == null) return avatar;
+    return Semantics(
+      button: true,
+      label: 'Ver foto de $name',
+      child: GestureDetector(
+        onTap: () => showPhotoViewer(context, name: name, image: img),
+        child: avatar,
+      ),
+    );
   }
+}
+
+/// Foto em tela cheia: fundo escuro, zoom e arrastar; toque fora ou no X fecha.
+Future<void> showPhotoViewer(
+  BuildContext context, {
+  required String name,
+  required ImageProvider image,
+}) {
+  return showDialog<void>(
+    context: context,
+    barrierColor: Colors.black87,
+    builder:
+        (ctx) => Dialog.fullscreen(
+          backgroundColor: Colors.transparent,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => Navigator.of(ctx).pop(),
+                  child: SafeArea(
+                    child: Center(
+                      child: InteractiveViewer(
+                        maxScale: 5,
+                        child: Image(image: image, fit: BoxFit.contain),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Fechar',
+                        color: Colors.white,
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.of(ctx).pop(),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+  );
 }
