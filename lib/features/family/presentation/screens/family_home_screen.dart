@@ -278,36 +278,20 @@ class _RoomTeam extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Material(
-      color: scheme.primary.withValues(alpha: 0.08),
-      borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
+    return Tooltip(
+      message: 'Equipe na sala ${team.first.className}',
       child: InkWell(
         borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
         onTap: () => _openList(context),
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.sm + 4,
-            vertical: AppSpacing.sm,
-          ),
-          child: Row(
-            children: [
-              AvatarStack(
-                people: [
-                  for (final s in team)
-                    (id: s.uid, name: s.name, photoUrl: s.photoUrl),
-                ],
-              ),
-              const SizedBox(width: AppSpacing.sm + 4),
-              Expanded(
-                child: Text(
-                  'Equipe na sala ${team.first.className}',
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
-              Icon(Icons.chevron_right, color: scheme.onSurfaceVariant),
+          padding: const EdgeInsets.all(AppSpacing.xs),
+          child: AvatarStack(
+            size: 30,
+            overlap: 10,
+            maxVisible: 3,
+            people: [
+              for (final s in team)
+                (id: s.uid, name: s.name, photoUrl: s.photoUrl),
             ],
           ),
         ),
@@ -361,18 +345,23 @@ class _KidCard extends ConsumerWidget {
             )
             .toList();
 
+    final text = Theme.of(context).textTheme;
+    final statusColor = present ? AppColors.success : scheme.onSurfaceVariant;
+    final age = ageLabel(child.birthDate);
+
     return PatternCard(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Quem é: foto, nome e idade (turma quando a equipe está na sala).
             Row(
               children: [
                 PersonAvatar(
                   name: child.fullName,
                   photo: child.photoUrl,
-                  radius: 32,
+                  radius: 28,
                 ),
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
@@ -383,66 +372,70 @@ class _KidCard extends ConsumerWidget {
                         child.displayName,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.titleLarge,
+                        style: text.titleLarge,
                       ),
+                      const SizedBox(height: 2),
                       Text(
-                        ageLabel(child.birthDate),
-                        style: TextStyle(color: scheme.onSurfaceVariant),
+                        [
+                          if (team.isNotEmpty) team.first.className,
+                          age,
+                        ].where((e) => e.isNotEmpty).join(' · '),
+                        style: text.bodyMedium?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
                       ),
                     ],
                   ),
                 ),
-                IconButton(
-                  tooltip: 'Editar cadastro',
-                  icon: const Icon(Icons.edit_outlined),
-                  onPressed: () => showChildSheet(context, child: child),
-                ),
               ],
             ),
             const SizedBox(height: AppSpacing.md),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md,
-                vertical: AppSpacing.sm + 2,
-              ),
-              decoration: BoxDecoration(
-                color:
-                    present
-                        ? AppColors.success.withValues(alpha: 0.12)
-                        : scheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    present ? Icons.check_circle : Icons.meeting_room_outlined,
-                    size: 20,
-                    color:
-                        present ? AppColors.success : scheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: Text(
-                      present
-                          ? 'Na sala desde ${hhmm(presence.at)}'
-                          : 'Fora da sala',
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color:
+            // Onde está: um selo de status e, ao lado, a equipe da sala.
+            Row(
+              children: [
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.sm + 4,
+                      vertical: AppSpacing.xs + 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color:
+                          present
+                              ? AppColors.success.withValues(alpha: 0.12)
+                              : scheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          present
+                              ? Icons.check_circle
+                              : Icons.meeting_room_outlined,
+                          size: 16,
+                          color: statusColor,
+                        ),
+                        const SizedBox(width: AppSpacing.xs + 2),
+                        Flexible(
+                          child: Text(
                             present
-                                ? AppColors.success
-                                : scheme.onSurfaceVariant,
-                      ),
+                                ? 'Na sala desde ${hhmm(presence.at)}'
+                                : 'Fora da sala',
+                            overflow: TextOverflow.ellipsis,
+                            style: text.labelLarge?.copyWith(color: statusColor),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
+                ),
+                const Spacer(),
+                if (team.isNotEmpty) _RoomTeam(team: team),
+              ],
             ),
-            if (team.isNotEmpty) ...[
-              const SizedBox(height: AppSpacing.sm),
-              _RoomTeam(team: team),
-            ],
             const SizedBox(height: AppSpacing.md),
+            // Ação principal (ou o pedido em andamento).
             if (request != null)
               Container(
                 padding: const EdgeInsets.fromLTRB(
@@ -493,22 +486,39 @@ class _KidCard extends ConsumerWidget {
                           label: const Text('Estou chegando'),
                         ),
               ),
-            const SizedBox(height: AppSpacing.sm),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () => context.push('/saude/${child.id}'),
-                icon: Icon(
-                  child.careAlert ? Icons.favorite : Icons.favorite_border,
-                  size: 18,
-                  color: child.careAlert ? AppColors.danger : null,
+            const SizedBox(height: AppSpacing.xs),
+            // Ações secundárias, discretas: saúde e cadastro.
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton.icon(
+                    onPressed: () => context.push('/saude/${child.id}'),
+                    icon: Icon(
+                      child.careAlert ? Icons.favorite : Icons.favorite_border,
+                      size: 18,
+                      color: child.careAlert ? AppColors.danger : null,
+                    ),
+                    label: Text(
+                      child.careAlert ? 'Saúde · preenchida' : 'Saúde',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ),
-                label: Text(
-                  child.careAlert
-                      ? 'Saúde e cuidados · preenchido'
-                      : 'Saúde e cuidados',
+                SizedBox(
+                  height: 20,
+                  child: VerticalDivider(
+                    width: 1,
+                    color: scheme.outlineVariant,
+                  ),
                 ),
-              ),
+                Expanded(
+                  child: TextButton.icon(
+                    onPressed: () => showChildSheet(context, child: child),
+                    icon: const Icon(Icons.edit_outlined, size: 18),
+                    label: const Text('Editar'),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

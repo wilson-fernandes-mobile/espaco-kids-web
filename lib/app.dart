@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/push/call_haptics.dart';
 import 'core/push/push_navigation.dart';
 import 'core/push/push_service.dart';
 import 'core/router/app_router.dart';
@@ -27,6 +28,7 @@ class EspacoKidsApp extends ConsumerWidget {
             : (church ?? ThemeColorOption.original);
     ref.watch(pushRegistrationProvider);
     ref.watch(pushNavigationProvider);
+    ref.watch(callHapticsProvider);
 
     // Persiste as escolhas de aparência no aparelho.
     ref.listen(themeModeProvider, (_, next) {
