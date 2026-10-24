@@ -27,6 +27,7 @@ class AppScaffold extends ConsumerWidget {
     this.actions,
     this.floatingActionButton,
     this.drawer,
+    this.badges = const {},
   });
 
   final Widget child;
@@ -37,6 +38,15 @@ class AppScaffold extends ConsumerWidget {
   final List<Widget>? actions;
   final Widget? floatingActionButton;
   final Widget? drawer;
+
+  /// Contagem de itens novos por caminho da aba; zero não mostra a bolinha.
+  final Map<String, int> badges;
+
+  Widget _icon(AppNavDestination d, IconData icon) {
+    final n = badges[d.path] ?? 0;
+    if (n <= 0) return Icon(icon);
+    return Badge(label: Text(n > 9 ? '9+' : '$n'), child: Icon(icon));
+  }
 
   static const double _wideBreakpoint = 840;
 
@@ -63,8 +73,8 @@ class AppScaffold extends ConsumerWidget {
               destinations: [
                 for (final d in destinations)
                   NavigationRailDestination(
-                    icon: Icon(d.icon),
-                    selectedIcon: Icon(d.selectedIcon),
+                    icon: _icon(d, d.icon),
+                    selectedIcon: _icon(d, d.selectedIcon),
                     label: Text(d.label),
                   ),
               ],
@@ -89,8 +99,8 @@ class AppScaffold extends ConsumerWidget {
         destinations: [
           for (final d in destinations)
             NavigationDestination(
-              icon: Icon(d.icon),
-              selectedIcon: Icon(d.selectedIcon),
+              icon: _icon(d, d.icon),
+              selectedIcon: _icon(d, d.selectedIcon),
               label: d.label,
             ),
         ],

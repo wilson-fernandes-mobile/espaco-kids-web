@@ -10,7 +10,9 @@ import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/calls/presentation/screens/calls_screen.dart';
 import '../../features/checkin/presentation/screens/scan_screen.dart';
+import '../../features/calls/presentation/providers/calls_providers.dart';
 import '../../features/family/presentation/screens/family_home_screen.dart';
+import '../../features/incidents/presentation/providers/incidents_providers.dart';
 import '../../features/incidents/presentation/screens/family_incidents_screen.dart';
 import '../../features/incidents/presentation/screens/incidents_screen.dart';
 import '../../features/family/presentation/screens/care_form_screen.dart';
@@ -247,7 +249,18 @@ class _RoleShell extends ConsumerWidget {
     final user = ref.watch(sessionProvider).user;
     final tabs = (user?.isFamily ?? false) ? _familyTabs : _staffTabs;
     final i = tabs.indexWhere((t) => location.startsWith(t.path));
+    final family = user?.isFamily ?? false;
+    // Bolinha nas abas da família: chamadas que ainda pedem resposta e
+    // ocorrências novas. "Estou indo" (visualizada) já não conta.
+    final openCalls =
+        family
+            ? (ref.watch(callsProvider).valueOrNull ?? const [])
+                .where((c) => c.open && c.status != 'visualizada')
+                .length
+            : 0;
+    final newIncidents = family ? ref.watch(unseenIncidentsProvider) : 0;
     return AppScaffold(
+      badges: {'/avisos': openCalls, '/relatos': newIncidents},
       drawer: AppDrawer(destinations: [...tabs, _profileDestination]),
       destinations: tabs,
       currentIndex: i < 0 ? 0 : i,

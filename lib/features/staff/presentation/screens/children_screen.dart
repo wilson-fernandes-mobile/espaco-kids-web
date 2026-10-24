@@ -12,10 +12,11 @@ import '../../../../shared/widgets/empty_state.dart';
 import '../../../kids/domain/entities/child.dart';
 import '../../../kids/presentation/providers/kids_providers.dart';
 
-enum _Filter { all, mine, present, absent }
+enum _Filter { mine, absent }
 
-/// Lista de crianças com busca e filtros: "minha sala" (quando há check-in
-/// numa sala), "na sala" e "fora".
+/// Lista de crianças com busca. Com check-in numa sala, mostra só "Minha sala"
+/// (da turma e com check-in) e "Ausentes" (da turma, sem check-in). Sem check-in
+/// numa sala, mostra todas as crianças (útil para a recepção buscar).
 class ChildrenScreen extends ConsumerStatefulWidget {
   const ChildrenScreen({super.key});
 
@@ -25,14 +26,7 @@ class ChildrenScreen extends ConsumerStatefulWidget {
 
 class _ChildrenScreenState extends ConsumerState<ChildrenScreen> {
   String _query = '';
-  late _Filter _filter;
-
-  @override
-  void initState() {
-    super.initState();
-    // Com check-in numa sala, abre já filtrado nas crianças dela.
-    _filter = ref.read(myRoomProvider) != null ? _Filter.mine : _Filter.all;
-  }
+  _Filter _filter = _Filter.mine;
 
   List<Child> _apply(
     List<Child> all,
@@ -43,12 +37,12 @@ class _ChildrenScreenState extends ConsumerState<ChildrenScreen> {
     final q = foldText(_query.trim());
     return all.where((c) {
       if (!c.active) return false;
-      if (_filter == _Filter.mine && roomId != null && c.classId != roomId) {
-        return false;
+      if (roomId != null) {
+        if (c.classId != roomId) return false;
+        final isPresent = present.contains(c.id);
+        if (_filter == _Filter.mine && !isPresent) return false;
+        if (_filter == _Filter.absent && isPresent) return false;
       }
-      final isPresent = present.contains(c.id);
-      if (_filter == _Filter.present && !isPresent) return false;
-      if (_filter == _Filter.absent && isPresent) return false;
       if (q.isEmpty) return true;
       return foldText(c.fullName).contains(q) ||
           foldText(c.nickname).contains(q) ||
@@ -65,9 +59,6 @@ class _ChildrenScreenState extends ConsumerState<ChildrenScreen> {
     final children = ref.watch(childrenProvider);
     final room = ref.watch(myRoomProvider);
     final guardians = ref.watch(guardianNamesProvider).valueOrNull ?? const {};
-    // Sem check-in, o filtro "Minha sala" não existe (cai em "Todas").
-    final filter =
-        room == null && _filter == _Filter.mine ? _Filter.all : _filter;
 
     return Scaffold(
       appBar: AppBar(
@@ -92,29 +83,27 @@ class _ChildrenScreenState extends ConsumerState<ChildrenScreen> {
               onChanged: (v) => setState(() => _query = v),
             ),
           ),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-            child: Row(
-              children: [
-                for (final e
-                    in {
-                      _Filter.all: 'Todas',
-                      if (room != null) _Filter.mine: 'Minha sala',
-                      _Filter.present: 'Na sala',
-                      _Filter.absent: 'Fora',
-                    }.entries)
-                  Padding(
-                    padding: const EdgeInsets.only(right: AppSpacing.sm),
-                    child: ChoiceChip(
-                      label: Text(e.value),
-                      selected: filter == e.key,
-                      onSelected: (_) => setState(() => _filter = e.key),
+          if (room != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+              child: Row(
+                children: [
+                  for (final e
+                      in {
+                        _Filter.mine: 'Minha sala',
+                        _Filter.absent: 'Ausentes',
+                      }.entries)
+                    Padding(
+                      padding: const EdgeInsets.only(right: AppSpacing.sm),
+                      child: ChoiceChip(
+                        label: Text(e.value),
+                        selected: _filter == e.key,
+                        onSelected: (_) => setState(() => _filter = e.key),
+                      ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
-          ),
           Expanded(
             child: AsyncValueWidget(
               value: children,

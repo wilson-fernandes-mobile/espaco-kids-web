@@ -28,6 +28,10 @@ class FamilyIncidentsScreen extends ConsumerWidget {
       body: AsyncValueWidget<List<Incident>>(
         value: ref.watch(incidentsProvider),
         data: (list) {
+          // Abrir a tela apaga a bolinha da aba.
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => ref.read(incidentsSeenProvider.notifier).markSeen(list),
+          );
           if (list.isEmpty) {
             return const EmptyState(
               icon: Icons.assignment_outlined,
