@@ -14,6 +14,9 @@ import '../../../calls/domain/entities/guardian_call.dart';
 import '../../../calls/presentation/providers/calls_providers.dart';
 import '../../../checkin/presentation/providers/checkin_actions.dart';
 import '../../../family/presentation/providers/family_providers.dart';
+import '../../../incidents/presentation/providers/incidents_providers.dart';
+import '../../../incidents/presentation/widgets/incident_sheet.dart';
+import '../../../incidents/presentation/widgets/incident_tile.dart';
 import '../../domain/entities/care_profile.dart';
 import '../../domain/entities/child.dart';
 import '../../domain/entities/person.dart';
@@ -145,103 +148,159 @@ class _Body extends ConsumerWidget {
     final authorized =
         people.where((p) => p.kind == PersonKind.authorized).toList();
 
-    return Scaffold(
-      appBar: AppBar(title: Text(child.displayName)),
-      body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        children: [
-          Center(
-            child: PersonAvatar(
-              name: child.fullName,
-              photo: child.photoUrl,
-              radius: 52,
-            ),
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(child.displayName),
+          bottom: const TabBar(
+            tabs: [Tab(text: 'Perfil'), Tab(text: 'Ocorrências')],
           ),
-          const SizedBox(height: AppSpacing.md),
-          Text(
-            child.fullName,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            '${ageLabel(child.birthDate)} · $className · ${child.code}',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Center(
-            child: StatusBadge(
-              label: present ? 'Na sala' : 'Fora da sala',
-              tone: present ? StatusTone.success : StatusTone.neutral,
-            ),
-          ),
-          if (child.notes.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.md),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                child: Text(child.notes),
-              ),
-            ),
-          ],
-          _CareCard(child: child),
-          const SizedBox(height: AppSpacing.lg),
-          if (user.role.canCheckInOut)
-            Row(
+        ),
+        body: TabBarView(
+          children: [
+            ListView(
+              padding: const EdgeInsets.all(AppSpacing.md),
               children: [
-                Expanded(
-                  child: FilledButton.icon(
-                    onPressed:
-                        present || !child.active
-                            ? null
-                            : () => _entry(context, ref),
-                    icon: const Icon(Icons.login),
-                    label: const Text('Entrada'),
+                Center(
+                  child: PersonAvatar(
+                    name: child.fullName,
+                    photo: child.photoUrl,
+                    radius: 52,
                   ),
                 ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: present ? () => _exit(context, ref) : null,
-                    icon: const Icon(Icons.logout),
-                    label: const Text('Saída'),
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  child.fullName,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  '${ageLabel(child.birthDate)} · $className · ${child.code}',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
+                const SizedBox(height: AppSpacing.sm),
+                Center(
+                  child: StatusBadge(
+                    label: present ? 'Na sala' : 'Fora da sala',
+                    tone: present ? StatusTone.success : StatusTone.neutral,
+                  ),
+                ),
+                if (child.notes.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      child: Text(child.notes),
+                    ),
+                  ),
+                ],
+                _CareCard(child: child),
+                const SizedBox(height: AppSpacing.lg),
+                if (user.role.canCheckInOut)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: FilledButton.icon(
+                          onPressed:
+                              present || !child.active
+                                  ? null
+                                  : () => _entry(context, ref),
+                          icon: const Icon(Icons.login),
+                          label: const Text('Entrada'),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: present ? () => _exit(context, ref) : null,
+                          icon: const Icon(Icons.logout),
+                          label: const Text('Saída'),
+                        ),
+                      ),
+                    ],
+                  ),
+                if (user.role.canCall && present) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _call(context, ref),
+                      icon: const Icon(Icons.campaign_outlined),
+                      label: const Text('Chamar responsáveis'),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: AppSpacing.lg),
+                const FormSectionHeader(
+                  icon: Icons.family_restroom,
+                  title: 'Responsáveis',
+                ),
+                for (final g in guardians) _PersonRow(person: g),
+                const SizedBox(height: AppSpacing.md),
+                const FormSectionHeader(
+                  icon: Icons.verified_user_outlined,
+                  title: 'Autorizados a retirar',
+                ),
+                if (authorized.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.all(AppSpacing.sm),
+                    child: Text('Nenhum autorizado cadastrado.'),
+                  ),
+                for (final a in authorized) _PersonRow(person: a),
               ],
             ),
-          if (user.role.canCall && present) ...[
-            const SizedBox(height: AppSpacing.sm),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () => _call(context, ref),
-                icon: const Icon(Icons.campaign_outlined),
-                label: const Text('Chamar responsáveis'),
-              ),
+            ListView(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              children: [_IncidentsSection(child: child)],
             ),
           ],
-          const SizedBox(height: AppSpacing.lg),
-          const FormSectionHeader(
-            icon: Icons.family_restroom,
-            title: 'Responsáveis',
-          ),
-          for (final g in guardians) _PersonRow(person: g),
-          const SizedBox(height: AppSpacing.md),
-          const FormSectionHeader(
-            icon: Icons.verified_user_outlined,
-            title: 'Autorizados a retirar',
-          ),
-          if (authorized.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(AppSpacing.sm),
-              child: Text('Nenhum autorizado cadastrado.'),
-            ),
-          for (final a in authorized) _PersonRow(person: a),
-        ],
+        ),
       ),
+    );
+  }
+}
+
+/// Ocorrências da criança (inclui as em que aparece como envolvida).
+class _IncidentsSection extends ConsumerWidget {
+  const _IncidentsSection({required this.child});
+
+  final Child child;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final list =
+        (ref.watch(incidentsProvider).valueOrNull ?? const [])
+            .where(
+              (i) =>
+                  i.childId == child.id ||
+                  i.involvedChildIds.contains(child.id),
+            )
+            .toList();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        FilledButton.icon(
+          onPressed: () => showIncidentSheet(context, fixedChild: child),
+          icon: const Icon(Icons.add),
+          label: const Text('Registrar ocorrência'),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        if (list.isEmpty)
+          const Padding(
+            padding: EdgeInsets.all(AppSpacing.md),
+            child: Text(
+              'Nenhuma ocorrência registrada.',
+              textAlign: TextAlign.center,
+            ),
+          ),
+        for (final i in list)
+          IncidentTile(incident: i, showChild: i.childId != child.id),
+      ],
     );
   }
 }

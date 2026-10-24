@@ -11,6 +11,8 @@ import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/calls/presentation/screens/calls_screen.dart';
 import '../../features/checkin/presentation/screens/scan_screen.dart';
 import '../../features/family/presentation/screens/family_home_screen.dart';
+import '../../features/incidents/presentation/screens/family_incidents_screen.dart';
+import '../../features/incidents/presentation/screens/incidents_screen.dart';
 import '../../features/family/presentation/screens/care_form_screen.dart';
 import '../../features/family/presentation/screens/family_notices_screen.dart';
 import '../../features/family/presentation/screens/family_setup_screen.dart';
@@ -50,6 +52,12 @@ const _staffTabs = [
     label: 'Chamadas',
     path: '/chamadas',
   ),
+  AppNavDestination(
+    icon: Icons.assignment_outlined,
+    selectedIcon: Icons.assignment,
+    label: 'Ocorrências',
+    path: '/ocorrencias',
+  ),
 ];
 
 /// Só no menu lateral (não aparece na barra inferior).
@@ -79,11 +87,30 @@ const _familyTabs = [
     label: 'Avisos',
     path: '/avisos',
   ),
+  AppNavDestination(
+    icon: Icons.assignment_outlined,
+    selectedIcon: Icons.assignment,
+    label: 'Ocorrências',
+    path: '/relatos',
+  ),
 ];
 
 const _publicRoutes = ['/login', '/signup'];
-const _staffOnly = ['/inicio', '/criancas', '/ler', '/chamadas', '/crianca/'];
-const _familyOnly = ['/familia', '/autorizados', '/avisos', '/saude/'];
+const _staffOnly = [
+  '/inicio',
+  '/criancas',
+  '/ler',
+  '/chamadas',
+  '/ocorrencias',
+  '/crianca/',
+];
+const _familyOnly = [
+  '/familia',
+  '/autorizados',
+  '/avisos',
+  '/relatos',
+  '/saude/',
+];
 
 /// Reavalia o `redirect` quando a sessão muda.
 class _SessionRefresh extends ChangeNotifier {
@@ -181,6 +208,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(path: '/criancas', builder: (_, _) => const ChildrenScreen()),
           GoRoute(path: '/ler', builder: (_, _) => const ScanScreen()),
           GoRoute(path: '/chamadas', builder: (_, _) => const CallsScreen()),
+          GoRoute(
+            path: '/relatos',
+            builder: (_, _) => const FamilyIncidentsScreen(),
+          ),
+          GoRoute(
+            path: '/ocorrencias',
+            builder: (_, _) => const IncidentsScreen(),
+          ),
           GoRoute(
             path: '/familia',
             builder: (_, _) => const FamilyHomeScreen(),
