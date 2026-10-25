@@ -14,10 +14,9 @@ import '../../features/calls/presentation/providers/calls_providers.dart';
 final callHapticsProvider = Provider<void>((ref) {
   final waiting = ref.watch(
     callsProvider.select(
-      (v) =>
-          (v.valueOrNull ?? const []).any(
-            (c) => c.open && c.status != 'visualizada',
-          ),
+      (v) => (v.valueOrNull ?? const []).any(
+        (c) => c.open && c.status != 'visualizada',
+      ),
     ),
   );
   final family = ref.watch(sessionProvider.select((s) => s.user?.isFamily));

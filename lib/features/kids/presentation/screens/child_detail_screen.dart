@@ -17,17 +17,26 @@ import '../../../family/presentation/providers/family_providers.dart';
 import '../../../incidents/presentation/providers/incidents_providers.dart';
 import '../../../incidents/presentation/widgets/incident_sheet.dart';
 import '../../../incidents/presentation/widgets/incident_tile.dart';
+import '../../../tasks/presentation/widgets/task_list.dart';
 import '../../domain/entities/care_profile.dart';
 import '../../domain/entities/child.dart';
 import '../../domain/entities/person.dart';
 import '../providers/kids_providers.dart';
 import '../widgets/person_picker_sheet.dart';
 
-/// Ficha da criança para a equipe: status, entrada/saída, chamada e contatos.
+/// Ficha da criança: status, entrada/saída, chamada e contatos (equipe) e, para
+/// a família e a equipe, os dados, as ocorrências e as tarefas da turma.
 class ChildDetailScreen extends ConsumerWidget {
-  const ChildDetailScreen({super.key, required this.childId});
+  const ChildDetailScreen({
+    super.key,
+    required this.childId,
+    this.initialTab = 0,
+  });
 
   final String childId;
+
+  /// 0 = perfil, 1 = ocorrências, 2 = tarefas.
+  final int initialTab;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -42,14 +51,15 @@ class ChildDetailScreen extends ConsumerWidget {
         body: const Center(child: CircularProgressIndicator()),
       );
     }
-    return _Body(child: child);
+    return _Body(child: child, initialTab: initialTab.clamp(0, 2));
   }
 }
 
 class _Body extends ConsumerWidget {
-  const _Body({required this.child});
+  const _Body({required this.child, required this.initialTab});
 
   final Child child;
+  final int initialTab;
 
   Future<void> _entry(BuildContext context, WidgetRef ref) async {
     final p = await pickPerson(
@@ -133,14 +143,25 @@ class _Body extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(sessionProvider).user!;
-    final present = ref.watch(presentIdsProvider).contains(child.id);
+    final family = user.isFamily;
+    // A família lê só a presença do próprio filho; a equipe, a de todos.
+    final present =
+        family
+            ? ref.watch(childPresenceProvider(child.id)).valueOrNull != null
+            : ref.watch(presentIdsProvider).contains(child.id);
     final people =
         ref.watch(familyPeopleProvider(child.familyId)).valueOrNull ?? const [];
     final classes = ref.watch(classesProvider).valueOrNull ?? const [];
+    // A família não lê as turmas: o nome vem de quem está na sala.
+    final roomStaff = ref.watch(roomStaffProvider).valueOrNull ?? const [];
     final className =
         classes
             .where((c) => c.id == child.classId)
             .map((c) => c.name)
+            .firstOrNull ??
+        roomStaff
+            .where((s) => s.classId == child.classId)
+            .map((s) => s.className)
             .firstOrNull ??
         '—';
     final guardians =
@@ -149,12 +170,17 @@ class _Body extends ConsumerWidget {
         people.where((p) => p.kind == PersonKind.authorized).toList();
 
     return DefaultTabController(
-      length: 2,
+      length: 3,
+      initialIndex: initialTab,
       child: Scaffold(
         appBar: AppBar(
           title: Text(child.displayName),
           bottom: const TabBar(
-            tabs: [Tab(text: 'Perfil'), Tab(text: 'Ocorrências')],
+            tabs: [
+              Tab(text: 'Perfil'),
+              Tab(text: 'Ocorrências'),
+              Tab(text: 'Tarefas'),
+            ],
           ),
         ),
         body: TabBarView(
@@ -202,7 +228,7 @@ class _Body extends ConsumerWidget {
                 ],
                 _CareCard(child: child),
                 const SizedBox(height: AppSpacing.lg),
-                if (user.role.canCheckInOut)
+                if (!family && user.role.canCheckInOut)
                   Row(
                     children: [
                       Expanded(
@@ -225,7 +251,7 @@ class _Body extends ConsumerWidget {
                       ),
                     ],
                   ),
-                if (user.role.canCall && present) ...[
+                if (!family && user.role.canCall && present) ...[
                   const SizedBox(height: AppSpacing.sm),
                   SizedBox(
                     width: double.infinity,
@@ -241,7 +267,8 @@ class _Body extends ConsumerWidget {
                   icon: Icons.family_restroom,
                   title: 'Responsáveis',
                 ),
-                for (final g in guardians) _PersonRow(person: g),
+                for (final g in guardians)
+                  _PersonRow(person: g, contact: !family),
                 const SizedBox(height: AppSpacing.md),
                 const FormSectionHeader(
                   icon: Icons.verified_user_outlined,
@@ -252,12 +279,17 @@ class _Body extends ConsumerWidget {
                     padding: EdgeInsets.all(AppSpacing.sm),
                     child: Text('Nenhum autorizado cadastrado.'),
                   ),
-                for (final a in authorized) _PersonRow(person: a),
+                for (final a in authorized)
+                  _PersonRow(person: a, contact: !family),
               ],
             ),
             ListView(
               padding: const EdgeInsets.all(AppSpacing.md),
               children: [_IncidentsSection(child: child)],
+            ),
+            ListView(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              children: [TaskList(child: child, className: className)],
             ),
           ],
         ),
@@ -282,20 +314,25 @@ class _IncidentsSection extends ConsumerWidget {
                   i.involvedChildIds.contains(child.id),
             )
             .toList();
+    final family = ref.watch(sessionProvider).user!.isFamily;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        FilledButton.icon(
-          onPressed: () => showIncidentSheet(context, fixedChild: child),
-          icon: const Icon(Icons.add),
-          label: const Text('Registrar ocorrência'),
-        ),
-        const SizedBox(height: AppSpacing.sm),
+        if (!family) ...[
+          FilledButton.icon(
+            onPressed: () => showIncidentSheet(context, fixedChild: child),
+            icon: const Icon(Icons.add),
+            label: const Text('Registrar ocorrência'),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+        ],
         if (list.isEmpty)
-          const Padding(
-            padding: EdgeInsets.all(AppSpacing.md),
+          Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
             child: Text(
-              'Nenhuma ocorrência registrada.',
+              family
+                  ? 'Nenhuma ocorrência enviada pela equipe.'
+                  : 'Nenhuma ocorrência registrada.',
               textAlign: TextAlign.center,
             ),
           ),
@@ -307,9 +344,12 @@ class _IncidentsSection extends ConsumerWidget {
 }
 
 class _PersonRow extends StatelessWidget {
-  const _PersonRow({required this.person});
+  const _PersonRow({required this.person, this.contact = true});
 
   final Person person;
+
+  /// Botões de WhatsApp e ligar: só para a equipe falar com a família.
+  final bool contact;
 
   Future<void> _open(BuildContext context, Uri? uri) async {
     if (uri == null ||
@@ -332,23 +372,30 @@ class _PersonRow extends StatelessWidget {
             ? '${person.relation} · autorização vencida'
             : person.relation,
       ),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (person.whatsapp)
-            IconButton(
-              tooltip: 'WhatsApp',
-              icon: const Icon(Icons.chat_outlined),
-              onPressed: () => _open(context, whatsappUri(person.phone, msg)),
-            ),
-          IconButton(
-            tooltip: 'Ligar',
-            icon: const Icon(Icons.call_outlined),
-            onPressed:
-                () => _open(context, Uri(scheme: 'tel', path: person.phone)),
-          ),
-        ],
-      ),
+      trailing:
+          !contact
+              ? null
+              : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (person.whatsapp)
+                    IconButton(
+                      tooltip: 'WhatsApp',
+                      icon: const Icon(Icons.chat_outlined),
+                      onPressed:
+                          () => _open(context, whatsappUri(person.phone, msg)),
+                    ),
+                  IconButton(
+                    tooltip: 'Ligar',
+                    icon: const Icon(Icons.call_outlined),
+                    onPressed:
+                        () => _open(
+                          context,
+                          Uri(scheme: 'tel', path: person.phone),
+                        ),
+                  ),
+                ],
+              ),
     );
   }
 }

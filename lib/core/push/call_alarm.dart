@@ -48,10 +48,11 @@ class CallAlarm {
         if (payload != null) onTap?.call(payload);
       },
     );
-    final android = _plugin
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >();
+    final android =
+        _plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >();
     await android?.createNotificationChannel(
       AndroidNotificationChannel(
         _channelId,

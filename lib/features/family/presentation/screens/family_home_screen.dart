@@ -356,39 +356,45 @@ class _KidCard extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Quem é: foto, nome e idade (turma quando a equipe está na sala).
-            Row(
-              children: [
-                PersonAvatar(
-                  name: child.fullName,
-                  photo: child.photoUrl,
-                  radius: 28,
-                  viewable: true,
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        child.displayName,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: text.titleLarge,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        [
-                          if (team.isNotEmpty) team.first.className,
-                          age,
-                        ].where((e) => e.isNotEmpty).join(' · '),
-                        style: text.bodyMedium?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
+            // Tocar abre o perfil completo (dados, ocorrências e tarefas).
+            InkWell(
+              borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
+              onTap: () => context.push('/crianca/${child.id}'),
+              child: Row(
+                children: [
+                  PersonAvatar(
+                    name: child.fullName,
+                    photo: child.photoUrl,
+                    radius: 28,
+                    viewable: true,
                   ),
-                ),
-              ],
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          child.displayName,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: text.titleLarge,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          [
+                            if (team.isNotEmpty) team.first.className,
+                            age,
+                          ].where((e) => e.isNotEmpty).join(' · '),
+                          style: text.bodyMedium?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.chevron_right, color: scheme.onSurfaceVariant),
+                ],
+              ),
             ),
             const SizedBox(height: AppSpacing.md),
             // Onde está: um selo de status e, ao lado, a equipe da sala.
@@ -507,10 +513,7 @@ class _KidCard extends ConsumerWidget {
                       size: 18,
                       color: child.careAlert ? AppColors.danger : null,
                     ),
-                    label: Text(
-                      child.careAlert ? 'Saúde · preenchida' : 'Saúde',
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    label: Text('Saúde', overflow: TextOverflow.ellipsis),
                   ),
                 ),
                 SizedBox(

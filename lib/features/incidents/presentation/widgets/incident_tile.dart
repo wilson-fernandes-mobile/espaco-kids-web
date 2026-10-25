@@ -39,7 +39,8 @@ class IncidentTile extends ConsumerWidget {
         i.authorId == user.uid;
     final who = [
       if (showChild) name(i.childId),
-      ...i.involvedChildIds.map(name),
+      // A família não vê quem mais estava envolvido.
+      if (!user.isFamily) ...i.involvedChildIds.map(name),
     ];
 
     return Card(

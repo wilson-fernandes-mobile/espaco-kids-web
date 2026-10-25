@@ -31,18 +31,36 @@ class StaffHomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(sessionProvider).user!;
-    final children = ref.watch(childrenProvider).valueOrNull ?? const [];
-    final present = ref.watch(presentIdsProvider);
+    final room = ref.watch(myRoomProvider);
+    final allChildren = ref.watch(childrenProvider).valueOrNull ?? const [];
     final classes = ref.watch(classesProvider).valueOrNull ?? const [];
     final calls = ref.watch(callsProvider).valueOrNull ?? const [];
-    final requests = ref.watch(pendingRequestsProvider).valueOrNull ?? const [];
-    final openCalls = calls.where((c) => c.open).length;
     final roomStaff = ref.watch(roomStaffProvider).valueOrNull ?? const [];
 
-    // Professor vê primeiro as suas turmas.
+    // Com check-in numa sala, o painel mostra só as crianças dela; sem check-in,
+    // mostra todas.
+    final children =
+        room == null
+            ? allChildren
+            : allChildren.where((c) => c.classId == room.classId).toList();
+    final ids = {for (final c in children) c.id};
+    final present = ref.watch(presentIdsProvider).where(ids.contains).toSet();
+    final requests =
+        (ref.watch(pendingRequestsProvider).valueOrNull ?? const [])
+            .where((r) => room == null || ids.contains(r.childId))
+            .toList();
+    final openCalls =
+        calls
+            .where((c) => c.open && (room == null || c.classId == room.classId))
+            .length;
+
+    // Na sala: só a turma do check-in. Sem sala, o professor vê primeiro as
+    // suas turmas.
     final mine = user.classIds.toSet();
     final shown =
-        mine.isEmpty
+        room != null
+            ? classes.where((c) => c.id == room.classId).toList()
+            : mine.isEmpty
             ? classes
             : classes.where((c) => mine.contains(c.id)).toList();
 
@@ -108,7 +126,7 @@ class StaffHomeScreen extends ConsumerWidget {
               onTap: () => context.go('/criancas'),
             ),
             right: StatCard(
-              label: 'Crianças ativas',
+              label: room == null ? 'Crianças ativas' : 'Crianças da turma',
               value: '${children.where((c) => c.active).length}',
               icon: Icons.groups_outlined,
             ),
