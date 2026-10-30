@@ -2,6 +2,15 @@
 
 Sistema multi-igreja (painel web + app Flutter) para cadastro de crianças e famílias, turmas, check-in/check-out, crachás com QR Code, chamadas aos responsáveis, notificações, relatórios, usuários e configurações. Backend: **Firebase (Auth + Firestore)**.
 
+## Estrutura do repositório (monorepo)
+| Pasta | O que é | Como rodar |
+|---|---|---|
+| `src/`, `public/`, `scripts/` (raiz) | Painel web + site público (TanStack Start, React) | `bun install && bun run dev` |
+| `mobile/` | App Flutter (Android/iOS) | `cd mobile && flutter pub get && flutter run` |
+| `functions/` | Cloud Functions (push, contas) | `firebase deploy --only functions --project espacokids-app` |
+| `firestore.rules`, `firestore.indexes.json`, `firebase.json` | Backend Firebase compartilhado por web e mobile | `firebase deploy --only firestore --project espacokids-app` |
+| `docs/`, `.claude/` | Documentação e skills do projeto | — |
+
 ## Rodar
 ```sh
 nvm use 22.14.0     # Windows/nvm-windows
@@ -28,4 +37,4 @@ O painel e uma SPA estatica (`dist/client`, fallback em `_shell.html`).
 TanStack Start · React 19 · TypeScript · Tailwind v4 · shadcn/ui · react-hook-form + zod · Recharts · qrcode.react + jsQR · Firebase.
 
 ## App mobile
-Mapeamento do app Flutter (professores, recepção e famílias): [docs/MOBILE.md](docs/MOBILE.md).
+O app Flutter (professores, recepção e famílias) fica em `mobile/`. Mapeamento: [docs/MOBILE.md](docs/MOBILE.md).

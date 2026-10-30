@@ -3,7 +3,7 @@
 > Modelo atual é **multi-igreja**: os dados ficam em `tenants/{churchId}/...` e o papel é por igreja (ver `.claude/CONTEXTO.md`). Onde este arquivo citar coleções na raiz (`children`, `calls`…), leia como subcoleções de `tenants/{churchId}`.
 
 Projeto: `C:\Users\wilso\Documents\GIT_PESSOAL\espaco_kids` (pacote `com.mova.software.espaco.kids.espaco_kids`).
-Backend: **o mesmo projeto Firebase do painel web** (`espacokids-app`). Apps Android e iOS já registrados no Firebase; `lib/firebase_options.dart` já está preenchido.
+Backend: **o mesmo projeto Firebase do painel web** (`espacokids-app`). Apps Android e iOS já registrados no Firebase; `mobile/lib/firebase_options.dart` já está preenchido.
 
 Base de layout: **MoveScheduler / MovaChurch** (`C:\Users\wilso\StudioProjects\MoveScheduler`) — mesma paleta, tipografia **Inter** (google_fonts), espaçamentos múltiplos de 4, cards com raio 16, botões raio 12, `NavigationBar` no celular e `NavigationRail` no tablet, tema claro/escuro e escolha de cor.
 
@@ -100,11 +100,11 @@ flutter analyze
 Antes do primeiro teste: habilitar **Authentication → E-mail/senha** (já feito), gerar o código `IG-` no painel e criar a conta no app.
 
 ## Gerar versão (Play Store)
-**As chaves de assinatura não estão no git: peça ao responsável, no cofre, o `android/key.properties` e o `android/app/upload-keystore.jks`.** A Play exige AAB (`flutter build appbundle --release`) e `versionCode` maior que o último enviado. Passo a passo em `.claude/CONTEXTO.md`, seção 7.
+**As chaves de assinatura não estão no git: peça ao responsável, no cofre, o `mobile/android/key.properties` e o `mobile/android/app/upload-keystore.jks`.** A Play exige AAB (`flutter build appbundle --release`) e `versionCode` maior que o último enviado. Passo a passo em `.claude/CONTEXTO.md`, seção 7.
 
 ## Fora do escopo desta fase (próximos passos)
 
-1. ~~Push (FCM)~~ **feito**: `functions/index.js` (Cloud Functions, Blaze) avisa a família a cada chamada e a recepção a cada pedido da família; o app grava o token em `users/{uid}.fcmTokens` (`lib/core/push/push_service.dart`). Publicar com `firebase deploy --only firestore,functions --project espacokids-app`. Falta no iOS: chave APNs no Firebase (Project Settings > Cloud Messaging).
+1. ~~Push (FCM)~~ **feito**: `functions/index.js` (Cloud Functions, Blaze) avisa a família a cada chamada e a recepção a cada pedido da família; o app grava o token em `users/{uid}.fcmTokens` (`mobile/lib/core/push/push_service.dart`). Publicar com `firebase deploy --only firestore,functions --project espacokids-app`. Falta no iOS: chave APNs no Firebase (Project Settings > Cloud Messaging).
 2. **QR pessoal do familiar** (mostrar o QR no app para a recepção ler) e crachá digital da criança.
 3. Família **adicionar autorizado temporário** pelo app (hoje é com a recepção).
 4. Validação de retirada **no servidor** (Cloud Functions) em vez de só no app.

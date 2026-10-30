@@ -22,9 +22,9 @@ Dois clientes, **um backend**: painel web (equipe) e app Flutter (equipe + famí
 | Parte | Pasta local | GitHub |
 |---|---|---|
 | Web (painel + site) | `C:\Users\wilso\Documents\GIT_SISTEMA\EspacoKids` | `wilson-fernandes-mobile/espaco-kids-web` (branch `main`) |
-| Mobile (Flutter) | `C:\Users\wilso\Documents\GIT_PESSOAL\espaco_kids` | `wilson-fernandes-mobile/espaco-kids-app` (branch `main`) |
+| Mobile (Flutter) | pasta `mobile/` do mesmo repositório | mesmo repo (o antigo `espaco-kids-app` foi importado com o histórico) |
 
-O mobile **não** está dentro do repositório web. As Cloud Functions, as Security Rules e os índices do Firestore ficam no repositório **web** e servem aos dois.
+Monorepo: o mobile é a pasta `mobile/` deste repositório. As Cloud Functions, as Security Rules e os índices do Firestore ficam no repositório **web** e servem aos dois.
 
 Projeto Firebase único: **`espacokids-app`** (console: https://console.firebase.google.com/project/espacokids-app). Hosting: https://espacokids-app.web.app. Região das functions: `us-central1`. Plano Blaze.
 
@@ -151,13 +151,13 @@ Tokens FCM ficam em `users/{uid}.fcmTokens`; tokens inválidos são removidos no
 
 Pacote `com.mova.software.espaco.kids.espaco_kids`. Flutter 3.29.3 (SDK em `C:\Users\wilso\Documents\SDK\flutter_windows_3.29.3-stable\flutter`). Estado: Riverpod · rotas: go_router · Firebase: core/auth/firestore/functions/messaging · login social Google e Apple · mobile_scanner (QR) · image_picker · layout herdado do MoveScheduler/MovaChurch (Inter, raio 16/12).
 
-Arquitetura feature-first em `lib/features/<feature>/{domain,data,presentation}`: `auth`, `tenant` (escolher/criar igreja, `/igrejas`), `kids`, `checkin`, `calls`, `family`, `staff`, `settings`. `lib/core/` tem router, tema, push (`push_service.dart`), erros, utilidades. Telas não falam com o Firestore: providers → repositórios (`data/`).
+Arquitetura feature-first em `mobile/lib/features/<feature>/{domain,data,presentation}`: `auth`, `tenant` (escolher/criar igreja, `/igrejas`), `kids`, `checkin`, `calls`, `family`, `staff`, `settings`. `mobile/lib/core/` tem router, tema, push (`push_service.dart`), erros, utilidades. Telas não falam com o Firestore: providers → repositórios (`data/`).
 
 Perfis: Professor, Recepção, Coordenação/Admin (mesmo app; cadastros pesados ficam no painel web) e Família (`responsavel`). Fluxo dos pais: criar conta → código `IG-` da igreja → assistente de 4 passos (`/cadastro-familia`: seus dados, filhos, quem pode buscar, código da família) → `/saude/:id` para saúde. Equipe entra com `KIDS-` e escolhe Professor ou Recepção. Fluxos de entrada/saída e chamada estão descritos em `docs/MOBILE.md`.
 
 Comandos:
 ```powershell
-cd C:\Users\wilso\Documents\GIT_PESSOAL\espaco_kids
+cd C:\Users\wilso\Documents\GIT_SISTEMA\EspacoKids\mobile
 flutter pub get
 flutter run                 # Android/iOS
 flutter analyze
@@ -166,18 +166,18 @@ flutter test
 
 ### Gerar versão para a Play Store — LEIA ANTES
 
-> **As chaves de assinatura NÃO estão no git.** Para gerar uma versão publicável é preciso **pedir as chaves ao responsável (guardadas no cofre)** e colocá-las em `android/`:
-> - `android/key.properties` (alias, senhas, caminho do keystore)
-> - `android/app/upload-keystore.jks` (chave de upload)
+> **As chaves de assinatura NÃO estão no git.** Para gerar uma versão publicável é preciso **pedir as chaves ao responsável (guardadas no cofre)** e colocá-las em `mobile/android/`:
+> - `mobile/android/key.properties` (alias, senhas, caminho do keystore)
+> - `mobile/android/app/upload-keystore.jks` (chave de upload)
 >
 > Ambos estão no `.gitignore` de propósito. **Nunca** os commite, cole em chat ou envie por e-mail. Sem `key.properties` o build de release **falha** (o projeto não cai na chave de debug, de propósito). Quem perder o `.jks` e a senha precisa pedir redefinição da chave de upload à Google Play.
 > Para iOS, as credenciais de assinatura/APNs também ficam fora do repositório (conta Apple Developer do responsável).
-> Os arquivos `google-services.json` / `GoogleService-Info.plist` e `lib/firebase_options.dart` vêm do projeto Firebase `espacokids-app`.
+> Os arquivos `google-services.json` / `GoogleService-Info.plist` e `mobile/lib/firebase_options.dart` vêm do projeto Firebase `espacokids-app`.
 
 Passos (com as chaves no lugar):
-1. Aumentar `version:` em `pubspec.yaml` (`nome+versionCode`). O `versionCode` (número depois do `+`) **precisa ser maior** que o último enviado à Play.
-2. A Play Store aceita **AAB**, não APK: `flutter build appbundle --release` → `build/app/outputs/bundle/release/app-release.aab`.
-3. Para distribuir fora da loja (testers diretos): `flutter build apk --release` → `build/app/outputs/flutter-apk/app-release.apk`. Conferir assinatura: `apksigner verify --print-certs app-release.apk` (SDK `build-tools`).
+1. Aumentar `version:` em `mobile/pubspec.yaml` (`nome+versionCode`). O `versionCode` (número depois do `+`) **precisa ser maior** que o último enviado à Play.
+2. A Play Store aceita **AAB**, não APK: `flutter build appbundle --release` → `mobile/build/app/outputs/bundle/release/app-release.aab`.
+3. Para distribuir fora da loja (testers diretos): `flutter build apk --release` → `mobile/build/app/outputs/flutter-apk/app-release.apk`. Conferir assinatura: `apksigner verify --print-certs app-release.apk` (SDK `build-tools`).
 4. Envio à loja: Play Console (teste interno/fechado → produção). A política de privacidade e a URL de exclusão de conta vêm do site (`/privacidade`, `/exclusao-de-conta`).
 
 Versão em 2026-10-21: `1.0.4+4`.
