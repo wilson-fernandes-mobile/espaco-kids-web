@@ -171,12 +171,23 @@ class _IncidentFormState extends ConsumerState<_IncidentForm> {
     final names = {for (final k in kids) k.id: k.displayName};
     final locked = widget.fixedChild != null || widget.editing != null;
 
+    final media = MediaQuery.of(context);
+    // useSafeArea não cobre a base: no Android a barra de navegação
+    // (voltar/início) ficava por cima do botão Salvar. iOS segue como estava.
+    final navBar =
+        Theme.of(context).platform == TargetPlatform.android
+            ? (media.viewPadding.bottom - media.viewInsets.bottom).clamp(
+              0.0,
+              double.infinity,
+            )
+            : 0.0;
+
     return Padding(
       padding: EdgeInsets.only(
         left: AppSpacing.md,
         right: AppSpacing.md,
         top: AppSpacing.md,
-        bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.md,
+        bottom: media.viewInsets.bottom + navBar + AppSpacing.md,
       ),
       child: SingleChildScrollView(
         child: Column(

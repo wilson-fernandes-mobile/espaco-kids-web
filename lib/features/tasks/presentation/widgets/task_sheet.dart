@@ -26,7 +26,8 @@ Future<void> showTaskSheet(
           _TaskForm(classId: classId, className: className, editing: editing),
 );
 
-typedef _LinkFields = ({TextEditingController label, TextEditingController url});
+typedef _LinkFields =
+    ({TextEditingController label, TextEditingController url});
 
 class _TaskForm extends ConsumerStatefulWidget {
   const _TaskForm({

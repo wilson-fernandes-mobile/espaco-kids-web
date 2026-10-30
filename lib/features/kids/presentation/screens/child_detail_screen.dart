@@ -289,7 +289,9 @@ class _Body extends ConsumerWidget {
             ),
             ListView(
               padding: const EdgeInsets.all(AppSpacing.md),
-              children: [TaskList(child: child, className: className)],
+              children: [
+                TaskList(classId: child.classId, className: className),
+              ],
             ),
           ],
         ),

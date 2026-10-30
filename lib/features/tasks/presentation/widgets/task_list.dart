@@ -9,41 +9,40 @@ import '../../../../core/utils/date_format.dart';
 import '../../../../shared/widgets/feedback.dart';
 import '../../../../shared/widgets/status_badge.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
-import '../../../kids/domain/entities/child.dart';
 import '../../domain/entities/class_task.dart';
 import '../providers/tasks_providers.dart';
 import 'task_sheet.dart';
 
-/// Tarefas da turma da criança. A família só lê; quem cria/edita é a
-/// coordenação/admin (qualquer turma) ou o professor da turma.
+/// Tarefas de uma turma. A família só lê; quem cria/edita é a coordenação/admin
+/// (qualquer turma) ou o professor da turma.
 class TaskList extends ConsumerWidget {
-  const TaskList({super.key, required this.child, required this.className});
+  const TaskList({super.key, required this.classId, required this.className});
 
-  final Child child;
+  final String classId;
   final String className;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(sessionProvider).user!;
-    final tasks = ref.watch(classTasksProvider(child.classId));
+    final tasks = ref.watch(classTasksProvider(classId));
     final canManage =
         !user.isFamily &&
         (user.role == AppRole.admin ||
             user.role == AppRole.coordenacao ||
             (user.role == AppRole.professor &&
-                user.classIds.contains(child.classId)));
+                user.classIds.contains(classId)));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (canManage && child.classId.isNotEmpty)
+        if (canManage && classId.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.sm),
             child: FilledButton.icon(
               onPressed:
                   () => showTaskSheet(
                     context,
-                    classId: child.classId,
+                    classId: classId,
                     className: className,
                   ),
               icon: const Icon(Icons.add),
@@ -70,7 +69,7 @@ class TaskList extends ConsumerWidget {
                       ? Padding(
                         padding: const EdgeInsets.all(AppSpacing.md),
                         child: Text(
-                          child.classId.isEmpty
+                          classId.isEmpty
                               ? 'A criança ainda não está em uma turma.'
                               : 'Nenhuma tarefa para a turma.',
                           textAlign: TextAlign.center,

@@ -244,6 +244,15 @@ class StaffHomeScreen extends ConsumerWidget {
                                     ? AppColors.danger
                                     : AppColors.primary,
                           ),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton.icon(
+                              onPressed:
+                                  () => context.push('/turma/${c.id}/tarefas'),
+                              icon: const Icon(Icons.checklist, size: 18),
+                              label: const Text('Tarefas da turma'),
+                            ),
+                          ),
                           if (roomStaff.any((s) => s.classId == c.id)) ...[
                             const SizedBox(height: AppSpacing.sm),
                             Row(

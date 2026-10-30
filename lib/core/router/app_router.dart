@@ -18,6 +18,7 @@ import '../../features/family/presentation/screens/family_setup_screen.dart';
 import '../../features/family/presentation/screens/family_people_screen.dart';
 import '../../features/kids/presentation/screens/child_detail_screen.dart';
 import '../../features/settings/presentation/screens/profile_screen.dart';
+import '../../features/tasks/presentation/screens/class_tasks_screen.dart';
 import '../../features/tenant/presentation/providers/tenant_providers.dart';
 import '../../features/tenant/presentation/screens/church_select_screen.dart';
 import '../../features/staff/presentation/screens/children_screen.dart';
@@ -167,6 +168,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                         SessionStatus.inactive,
                   ),
             ),
+      ),
+      GoRoute(
+        path: '/turma/:id/tarefas',
+        builder: (_, st) => ClassTasksScreen(classId: st.pathParameters['id']!),
       ),
       GoRoute(
         path: '/crianca/:id',
