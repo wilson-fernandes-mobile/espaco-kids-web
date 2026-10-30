@@ -5,7 +5,7 @@ Sistema multi-igreja (painel web + app Flutter) para cadastro de crianças e fam
 ## Estrutura do repositório (monorepo)
 | Pasta | O que é | Como rodar |
 |---|---|---|
-| `src/`, `public/`, `scripts/` (raiz) | Painel web + site público (TanStack Start, React) | `bun install && bun run dev` |
+| `web/` | Painel web + site público (TanStack Start, React) | `cd web && bun install && bun run dev` |
 | `mobile/` | App Flutter (Android/iOS) | `cd mobile && flutter pub get && flutter run` |
 | `functions/` | Cloud Functions (push, contas) | `firebase deploy --only functions --project espacokids-app` |
 | `firestore.rules`, `firestore.indexes.json`, `firebase.json` | Backend Firebase compartilhado por web e mobile | `firebase deploy --only firestore --project espacokids-app` |
@@ -13,6 +13,7 @@ Sistema multi-igreja (painel web + app Flutter) para cadastro de crianças e fam
 
 ## Rodar
 ```sh
+cd web
 nvm use 22.14.0     # Windows/nvm-windows
 bun install         # ou npm i
 bun run dev         # http://localhost:5173
@@ -21,11 +22,11 @@ Antes do primeiro login: habilite **E-mail/senha** em Firebase → Authenticatio
 
 ## Publicar (Firebase Hosting)
 ```sh
-bun run build
+cd web && bun run build
 firebase deploy --only hosting --project espacokids-app
 ```
 
-O painel e uma SPA estatica (`dist/client`, fallback em `_shell.html`).
+O painel e uma SPA estatica (`web/dist/client`, fallback em `_shell.html`).
 
 ## Documentação
 - [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md) — camadas, modelo de dados, segurança, próximos passos

@@ -8,7 +8,7 @@ description: Publica regras e índices do Firestore do Espaço Kids (projeto esp
 1. Troque para Node 22 (o Firebase CLI exige ≥ 20; o padrão da máquina pode ser v10):
    `nvm use 22.14.0` (PowerShell)
 2. Revise `firestore.rules` — nunca afrouxe regras de `health`, `audit` ou `users` sem pedido explícito do usuário.
-3. Rode `bun run build` para garantir que o app compila.
+3. Rode `cd web && bun run build` para garantir que o app compila.
 4. Publique: `firebase deploy --only firestore --project espacokids-app`
 5. Confirme "released rules" na saída e informe o usuário.
 

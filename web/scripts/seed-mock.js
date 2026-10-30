@@ -1,8 +1,8 @@
 // Dados de exemplo (mock) do Espaço Kids na estrutura multi-igreja.
 //
 //   cd C:\Users\wilso\Documents\GIT_SISTEMA\EspacoKids
-//   node scripts/seed-mock.js            # cria/atualiza os mocks
-//   node scripts/seed-mock.js --limpar   # apaga os mocks (igrejas demo + contas de teste)
+//   node web/scripts/seed-mock.js            # cria/atualiza os mocks
+//   node web/scripts/seed-mock.js --limpar   # apaga os mocks (igrejas demo + contas de teste)
 //
 // Usa o Admin SDK (ignora as regras) no projeto espacokids-app. Credencial:
 // `gcloud auth application-default login` (ou GOOGLE_APPLICATION_CREDENTIALS).
@@ -20,7 +20,7 @@
 // Códigos: equipe KIDS-DEMO01 · família LK-SILVA1, LK-COSTA1, LK-SOUZA1 (igreja-demo), LK-VISIT1 (igreja-visita)
 const { createRequire } = require("module");
 const path = require("path");
-const req = createRequire(path.join(__dirname, "..", "functions", "package.json"));
+const req = createRequire(path.join(__dirname, "..", "..", "functions", "package.json"));
 const { initializeApp } = req("firebase-admin/app");
 const { getFirestore } = req("firebase-admin/firestore");
 const { getAuth } = req("firebase-admin/auth");

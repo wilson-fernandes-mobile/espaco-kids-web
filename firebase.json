@@ -2,7 +2,7 @@
   "firestore": { "rules": "firestore.rules", "indexes": "firestore.indexes.json" },
   "functions": [{ "source": "functions", "codebase": "default", "ignore": ["node_modules", ".git"] }],
   "hosting": {
-    "public": "dist/client",
+    "public": "web/dist/client",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [{ "source": "**", "destination": "/_shell.html" }],
     "headers": [

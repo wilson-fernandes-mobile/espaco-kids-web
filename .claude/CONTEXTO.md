@@ -55,7 +55,7 @@ Subcoleções de `tenants/{churchId}`:
 | `familyLinks/{LK-XXXXXX}` | vínculo para outro responsável entrar na mesma família | equipe ou a própria família |
 | `pendingLinks/{uid}` | pendência criada por `importFamily` | só servidor |
 | `children`, `families`, `guardians`, `authorized` | cadastros (família = doc com id do usuário que a criou) | equipe de cadastro; a família edita os seus |
-| `health/{childId}` | **saúde** isolada (formato em `src/lib/domain/care.ts` e `care_profile.dart`) | coordenação; família dos próprios filhos; professor da turma só lê |
+| `health/{childId}` | **saúde** isolada (formato em `web/src/lib/domain/care.ts` e `care_profile.dart`) | coordenação; família dos próprios filhos; professor da turma só lê |
 | `classes` | turmas | coordenação/admin |
 | `roomStaff/{uid}` | equipe com check-in numa sala | a própria pessoa |
 | `badges` | crachás; `token` aleatório de 96 bits | recepção+ |
@@ -82,7 +82,7 @@ Subcoleções de `tenants/{churchId}`:
 
 ## 4. Planos e cobrança
 
-Definidos em `src/lib/billing.ts` (limites) e `src/lib/site.ts` (preços exibidos):
+Definidos em `web/src/lib/billing.ts` (limites) e `web/src/lib/site.ts` (preços exibidos):
 
 | Plano | Limite de crianças ativas | Preço (site) |
 |---|---|---|
@@ -120,16 +120,16 @@ Regra de ouro: componentes **não** falam com o Firestore; usam `useStore()`. Re
 
 **Gate** (`routes/__root.tsx`): `loading` → Splash · `signed-out` → landing em `/`, login em `/entrar`, cadastro em `/registrar` · `needs-church` → ChurchPicker · `no-profile`/`inactive` → bloqueado · pronto → `StoreProvider` + `AppShell`. Caminhos públicos (`PUBLIC_PATHS`) abrem com ou sem login. O `StoreProvider` só assina o que o papel permite.
 
-Variáveis: `.env` (ignorado) e `.env.example` com `VITE_FIREBASE_*`. A chave web do Firebase é pública por design; a proteção são as Security Rules.
+Variáveis: `web/.env` (ignorado) e `web/.env.example` com `VITE_FIREBASE_*`. A chave web do Firebase é pública por design; a proteção são as Security Rules.
 
 Comandos:
 ```sh
-bun install && bun run dev          # http://localhost:8080 (porta fixa no vite.config.ts)
-bun run build                       # gera dist/client (SPA, fallback _shell.html)
-bun run test                        # vitest
+cd web && bun install && bun run dev        # http://localhost:8080 (porta fixa no web/vite.config.ts)
+cd web && bun run build                       # gera web/dist/client (SPA, fallback _shell.html)
+cd web && bun run test                        # vitest
 bun run lint
 ```
-Não existe `tsconfig.json` na raiz (só `src/tsconfig.json`); `vite build` é a checagem de tipos/compilação usada.
+Não existe `tsconfig.json` na raiz (só `web/src/tsconfig.json`); `vite build` é a checagem de tipos/compilação usada.
 
 Skills úteis em `.claude/skills/`: `firebase-deploy`, `novo-modulo`, `verificar-projeto`.
 
@@ -197,19 +197,19 @@ firebase deploy --only functions --project espacokids-app
 ```
 Publique **regras e web juntos** quando mudar o modelo de dados, senão a versão antiga do web quebra. Domínios novos precisam ser adicionados em Authentication → Domínios autorizados. E-mail/senha precisa estar habilitado em Authentication.
 
-Testes de regras: `scripts/rules.test.mjs` com o emulador do Firestore (exige **JDK 21**; porta 8089, config em `scripts/firebase.rules-test.json`). `scripts/seed-mock.js` cria dados e contas de teste mas usa o fluxo antigo (equipe cadastra família) e precisa de `gcloud auth application-default login`.
+Testes de regras: `web/scripts/rules.test.mjs` com o emulador do Firestore (exige **JDK 21**; porta 8089, config em `web/scripts/firebase.rules-test.json`). `web/scripts/seed-mock.js` cria dados e contas de teste mas usa o fluxo antigo (equipe cadastra família) e precisa de `gcloud auth application-default login`.
 
 ## 9. Segredos e acesso (nada disso está no git)
 
 - Chaves Android (`key.properties`, `.jks`): cofre do responsável (ver seção 7).
 - Conta Firebase/Google Cloud do projeto `espacokids-app` (Blaze) e conta Apple Developer: com o responsável.
 - Chave APNs do push no iPhone: precisa ser criada na Apple e enviada ao Firebase (Project Settings → Cloud Messaging). Não revogar a chave de outro produto da mesma conta Apple.
-- `.env` do web: copie de `.env.example`.
+- `web/.env` do web: copie de `web/.env.example`.
 
 ## 10. Pendências conhecidas
 
 - Push no iPhone (APNs) e build iOS (precisa de Mac).
-- Cobrança automática (Mercado Pago) e preços finais; preencher placeholders do site em `src/lib/site.ts` (razão social, CNPJ, endereço, e-mails, data) e o foro em `termos-de-uso`.
+- Cobrança automática (Mercado Pago) e preços finais; preencher placeholders do site em `web/src/lib/site.ts` (razão social, CNPJ, endereço, e-mails, data) e o foro em `termos-de-uso`.
 - Testes de regras no emulador com cenários dos pais (joinCodes, família cria `families/{uid}`, saúde, familyLinks); ajustar `seed-mock.js` ao fluxo `IG-`.
 - Revisão periódica (6 meses) do cadastro de saúde; registrar quem fez check-in/out (nomes) na presença.
 - Retenção/anonimização LGPD, consentimento por criança, App Check, validação de retirada no servidor, expiração de crachá no servidor.

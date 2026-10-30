@@ -7,7 +7,7 @@ Visão geral do produto, do banco e da publicação: [`.claude/CONTEXTO.md`](../
 ## Camadas
 
 ```
-src/
+web/src/
 ├─ routes/                 Telas (file-based routing). Só apresentação + orquestração.
 ├─ components/app/         Componentes do sistema (shell, login, seletor de igreja, crachá, scanner, saúde…)
 ├─ components/site/        Site público (landing, layout)

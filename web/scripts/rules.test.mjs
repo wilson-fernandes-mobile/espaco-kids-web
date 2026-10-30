@@ -1,12 +1,12 @@
 // Testes das Security Rules multi-igreja (emulador do Firestore, porta 8089).
 // Requer JDK 21+ e:  npm i -D @firebase/rules-unit-testing
 // Rodar (na raiz do projeto):
-//   firebase emulators:exec --only firestore --project demo-rules --config scripts/firebase.rules-test.json "node scripts/rules.test.mjs"
+//   firebase emulators:exec --only firestore --project demo-rules --config web/scripts/firebase.rules-test.json "node web/scripts/rules.test.mjs"
 import { initializeTestEnvironment, assertSucceeds, assertFails } from "@firebase/rules-unit-testing";
 import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, writeBatch } from "firebase/firestore";
 import fs from "node:fs";
 
-const RULES = new URL("../firestore.rules", import.meta.url);
+const RULES = new URL("../../firestore.rules", import.meta.url);
 const env = await initializeTestEnvironment({
   projectId: "demo-rules",
   firestore: { rules: fs.readFileSync(RULES, "utf8"), host: "127.0.0.1", port: 8089 },

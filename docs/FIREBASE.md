@@ -12,14 +12,14 @@ firebase login            # já feito
 ```
 
 ## Variáveis (.env)
-`.env` (ignorado pelo git) e `.env.example` contêm `VITE_FIREBASE_*`. A chave web do Firebase é pública por design; a proteção são as **Security Rules**.
+`web/.env` (ignorado pelo git) e `web/.env.example` contêm `VITE_FIREBASE_*`. A chave web do Firebase é pública por design; a proteção são as **Security Rules**.
 
 ## Passo manual obrigatório (1x): habilitar login por e-mail/senha
 Console → **Authentication → Começar → Método de login → E-mail/senha → Ativar → Salvar**.
 Sem isso o login mostra "Login por e-mail/senha não está habilitado".
 
 ## Primeiro uso
-1. `bun install` · `bun run dev` → http://localhost:8080
+1. `cd web && bun install && bun run dev` → http://localhost:8080
 2. Tela de login → **Criar cadastro** → criar a igreja (a pessoa vira admin dela). Cada igreja é independente (`tenants/{churchId}`).
 3. Em **Usuários e permissões**, gere o **código de convite** (`KIDS-`, professor/recepção) e o **código de entrada dos pais** (`IG-`). Coordenação e outros admins você cria direto na lista.
 4. Em **Configurações → Dados**, carregue dados fictícios (opcional) ou cadastre turmas.
@@ -29,7 +29,7 @@ Sem isso o login mostra "Login por e-mail/senha não está habilitado".
 nvm use 22.14.0
 firebase deploy --only firestore --project espacokids-app   # regras + índices
 firebase deploy --only functions --project espacokids-app   # Cloud Functions (Node 22)
-firebase deploy --only hosting --project espacokids-app     # após bun run build
+firebase deploy --only hosting --project espacokids-app     # após (cd web && bun run build)
 ```
 Rode o deploy de regras sempre que alterar `firestore.rules` ou `firestore.indexes.json`. Ao mudar o modelo de dados, publique regras e hosting juntos.
 
