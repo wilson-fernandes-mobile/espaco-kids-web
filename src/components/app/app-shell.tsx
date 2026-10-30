@@ -10,6 +10,8 @@ import {
   QrCode,
   BellRing,
   Bell,
+  ClipboardList,
+  ListChecks,
   BarChart3,
   ShieldCheck,
   Settings,
@@ -70,6 +72,18 @@ const NAV_GROUPS: { title?: string; footer?: boolean; items: NavItem[] }[] = [
         label: "Chamadas aos responsáveis",
         icon: BellRing,
         perm: "chamadas",
+      },
+      {
+        to: "/ocorrencias",
+        label: "Ocorrências",
+        icon: ClipboardList,
+        perm: "ocorrencias",
+      },
+      {
+        to: "/tarefas",
+        label: "Tarefas da turma",
+        icon: ListChecks,
+        perm: "tarefas",
       },
       {
         to: "/notificacoes",

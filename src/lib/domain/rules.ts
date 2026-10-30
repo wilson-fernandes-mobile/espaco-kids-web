@@ -17,6 +17,8 @@ export type Permission =
   | "crachas"
   | "chamadas"
   | "notificacoes"
+  | "ocorrencias"
+  | "tarefas"
   | "relatorios"
   | "usuarios"
   | "configuracoes"
@@ -32,6 +34,8 @@ export const PERMISSIONS: Record<Role, Permission[]> = {
     "crachas",
     "chamadas",
     "notificacoes",
+    "ocorrencias",
+    "tarefas",
     "relatorios",
     "usuarios",
     "configuracoes",
@@ -46,10 +50,19 @@ export const PERMISSIONS: Record<Role, Permission[]> = {
     "crachas",
     "chamadas",
     "notificacoes",
+    "ocorrencias",
+    "tarefas",
     "relatorios",
     "saude",
   ],
-  professor: ["dashboard", "chamadas", "notificacoes", "turmas"],
+  professor: [
+    "dashboard",
+    "chamadas",
+    "notificacoes",
+    "ocorrencias",
+    "tarefas",
+    "turmas",
+  ],
   recepcao: [
     "dashboard",
     "criancas",
@@ -57,6 +70,7 @@ export const PERMISSIONS: Record<Role, Permission[]> = {
     "checkin",
     "crachas",
     "notificacoes",
+    "ocorrencias",
   ],
 };
 

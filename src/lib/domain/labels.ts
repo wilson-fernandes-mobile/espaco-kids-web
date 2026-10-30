@@ -3,8 +3,17 @@ import type {
   CallReason,
   CallStatus,
   ChildStatus,
+  IncidentKind,
   NotificationCategory,
 } from "./types";
+
+export const INCIDENT_KIND: Record<IncidentKind, string> = {
+  briga: "Briga ou conflito",
+  mordida: "Mordida",
+  comportamento: "Mau comportamento",
+  machucado: "Machucado ou queda",
+  outro: "Outro",
+};
 
 export const CALL_REASON: Record<CallReason, string> = {
   atendimento: "Necessidade de atendimento",

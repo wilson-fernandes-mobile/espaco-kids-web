@@ -21,10 +21,12 @@ import { Route as ExclusaoDeContaRouteImport } from './routes/exclusao-de-conta'
 import { Route as FamiliasRouteImport } from './routes/familias'
 import { Route as LgpdRouteImport } from './routes/lgpd'
 import { Route as NotificacoesRouteImport } from './routes/notificacoes'
+import { Route as OcorrenciasRouteImport } from './routes/ocorrencias'
 import { Route as PlanosRouteImport } from './routes/planos'
 import { Route as PrivacidadeRouteImport } from './routes/privacidade'
 import { Route as RegistrarRouteImport } from './routes/registrar'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
+import { Route as TarefasRouteImport } from './routes/tarefas'
 import { Route as TermosDeUsoRouteImport } from './routes/termos-de-uso'
 import { Route as TurmasRouteImport } from './routes/turmas'
 import { Route as UsuariosRouteImport } from './routes/usuarios'
@@ -92,6 +94,11 @@ const NotificacoesRoute = NotificacoesRouteImport.update({
   path: '/notificacoes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OcorrenciasRoute = OcorrenciasRouteImport.update({
+  id: '/ocorrencias',
+  path: '/ocorrencias',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlanosRoute = PlanosRouteImport.update({
   id: '/planos',
   path: '/planos',
@@ -110,6 +117,11 @@ const RegistrarRoute = RegistrarRouteImport.update({
 const RelatoriosRoute = RelatoriosRouteImport.update({
   id: '/relatorios',
   path: '/relatorios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TarefasRoute = TarefasRouteImport.update({
+  id: '/tarefas',
+  path: '/tarefas',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TermosDeUsoRoute = TermosDeUsoRouteImport.update({
@@ -156,10 +168,12 @@ export interface FileRoutesByFullPath {
   '/familias': typeof FamiliasRoute
   '/lgpd': typeof LgpdRoute
   '/notificacoes': typeof NotificacoesRoute
+  '/ocorrencias': typeof OcorrenciasRoute
   '/planos': typeof PlanosRoute
   '/privacidade': typeof PrivacidadeRoute
   '/registrar': typeof RegistrarRoute
   '/relatorios': typeof RelatoriosRoute
+  '/tarefas': typeof TarefasRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
   '/turmas': typeof TurmasRoute
   '/usuarios': typeof UsuariosRoute
@@ -180,10 +194,12 @@ export interface FileRoutesByTo {
   '/familias': typeof FamiliasRoute
   '/lgpd': typeof LgpdRoute
   '/notificacoes': typeof NotificacoesRoute
+  '/ocorrencias': typeof OcorrenciasRoute
   '/planos': typeof PlanosRoute
   '/privacidade': typeof PrivacidadeRoute
   '/registrar': typeof RegistrarRoute
   '/relatorios': typeof RelatoriosRoute
+  '/tarefas': typeof TarefasRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
   '/turmas': typeof TurmasRoute
   '/usuarios': typeof UsuariosRoute
@@ -205,10 +221,12 @@ export interface FileRoutesById {
   '/familias': typeof FamiliasRoute
   '/lgpd': typeof LgpdRoute
   '/notificacoes': typeof NotificacoesRoute
+  '/ocorrencias': typeof OcorrenciasRoute
   '/planos': typeof PlanosRoute
   '/privacidade': typeof PrivacidadeRoute
   '/registrar': typeof RegistrarRoute
   '/relatorios': typeof RelatoriosRoute
+  '/tarefas': typeof TarefasRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
   '/turmas': typeof TurmasRoute
   '/usuarios': typeof UsuariosRoute
@@ -231,10 +249,12 @@ export interface FileRouteTypes {
     | '/familias'
     | '/lgpd'
     | '/notificacoes'
+    | '/ocorrencias'
     | '/planos'
     | '/privacidade'
     | '/registrar'
     | '/relatorios'
+    | '/tarefas'
     | '/termos-de-uso'
     | '/turmas'
     | '/usuarios'
@@ -255,10 +275,12 @@ export interface FileRouteTypes {
     | '/familias'
     | '/lgpd'
     | '/notificacoes'
+    | '/ocorrencias'
     | '/planos'
     | '/privacidade'
     | '/registrar'
     | '/relatorios'
+    | '/tarefas'
     | '/termos-de-uso'
     | '/turmas'
     | '/usuarios'
@@ -279,10 +301,12 @@ export interface FileRouteTypes {
     | '/familias'
     | '/lgpd'
     | '/notificacoes'
+    | '/ocorrencias'
     | '/planos'
     | '/privacidade'
     | '/registrar'
     | '/relatorios'
+    | '/tarefas'
     | '/termos-de-uso'
     | '/turmas'
     | '/usuarios'
@@ -304,10 +328,12 @@ export interface RootRouteChildren {
   FamiliasRoute: typeof FamiliasRoute
   LgpdRoute: typeof LgpdRoute
   NotificacoesRoute: typeof NotificacoesRoute
+  OcorrenciasRoute: typeof OcorrenciasRoute
   PlanosRoute: typeof PlanosRoute
   PrivacidadeRoute: typeof PrivacidadeRoute
   RegistrarRoute: typeof RegistrarRoute
   RelatoriosRoute: typeof RelatoriosRoute
+  TarefasRoute: typeof TarefasRoute
   TermosDeUsoRoute: typeof TermosDeUsoRoute
   TurmasRoute: typeof TurmasRoute
   UsuariosRoute: typeof UsuariosRoute
@@ -402,6 +428,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NotificacoesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ocorrencias': {
+      id: '/ocorrencias'
+      path: '/ocorrencias'
+      fullPath: '/ocorrencias'
+      preLoaderRoute: typeof OcorrenciasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/planos': {
       id: '/planos'
       path: '/planos'
@@ -428,6 +461,13 @@ declare module '@tanstack/react-router' {
       path: '/relatorios'
       fullPath: '/relatorios'
       preLoaderRoute: typeof RelatoriosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tarefas': {
+      id: '/tarefas'
+      path: '/tarefas'
+      fullPath: '/tarefas'
+      preLoaderRoute: typeof TarefasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/termos-de-uso': {
@@ -488,10 +528,12 @@ const rootRouteChildren: RootRouteChildren = {
   FamiliasRoute: FamiliasRoute,
   LgpdRoute: LgpdRoute,
   NotificacoesRoute: NotificacoesRoute,
+  OcorrenciasRoute: OcorrenciasRoute,
   PlanosRoute: PlanosRoute,
   PrivacidadeRoute: PrivacidadeRoute,
   RegistrarRoute: RegistrarRoute,
   RelatoriosRoute: RelatoriosRoute,
+  TarefasRoute: TarefasRoute,
   TermosDeUsoRoute: TermosDeUsoRoute,
   TurmasRoute: TurmasRoute,
   UsuariosRoute: UsuariosRoute,

@@ -60,8 +60,10 @@ import type {
   ClassRoom,
   Family,
   Guardian,
+  IncidentKind,
   NotificationCategory,
   Role,
+  TaskLink,
 } from "./domain/types";
 
 const now = () => new Date().toISOString();
@@ -102,6 +104,24 @@ interface Ctx {
     note?: string,
   ) => Promise<void>;
   setCallStatus: (callId: string, status: CallStatus) => Promise<void>;
+  saveIncident: (i: {
+    id?: string;
+    childId: string;
+    kind: IncidentKind;
+    text: string;
+    involvedChildIds: string[];
+    sharedWithFamily: boolean;
+  }) => Promise<void>;
+  deleteIncident: (id: string) => Promise<void>;
+  saveTask: (t: {
+    id?: string;
+    classId: string;
+    title: string;
+    description: string;
+    dueDate?: string;
+    links: TaskLink[];
+  }) => Promise<void>;
+  deleteTask: (id: string) => Promise<void>;
   markAllRead: () => Promise<void>;
   sendAnnouncement: (title: string, recipient: string) => Promise<void>;
   createUserAccount: (u: {
@@ -136,6 +156,8 @@ const EMPTY: AppState = {
   badges: [],
   attendance: [],
   calls: [],
+  incidents: [],
+  tasks: [],
   notifications: [],
   audit: [],
   users: [],
@@ -204,6 +226,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     watch(
       "calls",
       query(tcol("calls"), orderBy("createdAt", "desc"), limit(500)),
+    );
+    watch(
+      "incidents",
+      query(tcol("incidents"), orderBy("createdAt", "desc"), limit(500)),
+    );
+    watch(
+      "tasks",
+      query(tcol("tasks"), orderBy("createdAt", "desc"), limit(300)),
     );
     watch(
       "notifications",
@@ -301,6 +331,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     "badges",
     "attendance",
     "calls",
+    "incidents",
+    "tasks",
     "notifications",
     "settings",
   ];
@@ -703,6 +735,81 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         await log(
           `Chamada de ${stateRef.current.children.find((k) => k.id === c.childId)?.fullName ?? c.childId} → ${status}`,
         );
+      },
+
+      saveIncident: async (i) => {
+        const child = stateRef.current.children.find((c) => c.id === i.childId);
+        if (!child) return;
+        const body = {
+          childId: i.childId,
+          classId: child.classId,
+          kind: i.kind,
+          text: i.text.trim(),
+          involvedChildIds: i.involvedChildIds.filter((x) => x !== i.childId),
+          familyId: child.familyId,
+          sharedWithFamily: i.sharedWithFamily,
+        };
+        if (i.id) {
+          await updateDoc(tdoc("incidents", i.id), {
+            ...body,
+            updatedAt: now(),
+          });
+        } else {
+          await addDoc(tcol("incidents"), {
+            ...body,
+            authorId: uid,
+            authorName: currentUser,
+            createdAt: now(),
+          });
+        }
+        // Sem o texto da ocorrência na auditoria: pode conter detalhes sensíveis.
+        await log(
+          `Ocorrência ${i.id ? "editada" : "registrada"} — ${child.fullName}`,
+        );
+      },
+
+      deleteIncident: async (id) => {
+        const inc = stateRef.current.incidents.find((x) => x.id === id);
+        await deleteDoc(tdoc("incidents", id));
+        const name = stateRef.current.children.find(
+          (c) => c.id === inc?.childId,
+        )?.fullName;
+        await log(`Ocorrência removida${name ? ` — ${name}` : ""}`);
+      },
+
+      saveTask: async (t) => {
+        const cls = stateRef.current.classes.find((c) => c.id === t.classId);
+        if (!cls) return;
+        const body = {
+          classId: t.classId,
+          title: t.title.trim(),
+          description: t.description.trim(),
+          dueDate: t.dueDate || "",
+          links: t.links.map((l) => ({
+            label: l.label.trim(),
+            url: l.url.trim(),
+          })),
+        };
+        if (t.id) {
+          await updateDoc(tdoc("tasks", t.id), { ...body, updatedAt: now() });
+        } else {
+          // A Cloud Function onTaskCreated avisa as famílias da turma por push.
+          await addDoc(tcol("tasks"), {
+            ...body,
+            authorId: uid,
+            authorName: currentUser,
+            createdAt: now(),
+          });
+        }
+        await log(
+          `Tarefa ${t.id ? "editada" : "criada"} — ${cls.name}: ${body.title}`,
+        );
+      },
+
+      deleteTask: async (id) => {
+        const t = stateRef.current.tasks.find((x) => x.id === id);
+        await deleteDoc(tdoc("tasks", id));
+        await log(`Tarefa removida${t ? ` — ${t.title}` : ""}`);
       },
 
       markAllRead: async () => {

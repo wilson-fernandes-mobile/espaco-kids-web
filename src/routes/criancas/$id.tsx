@@ -21,6 +21,8 @@ import {
 import { WhatsAppButton } from "@/components/app/whatsapp-button";
 import { ChildForm } from "@/components/app/child-form";
 import { CarePanel } from "@/components/app/care-panel";
+import { IncidentPanel } from "@/components/app/incident-panel";
+import { TaskPanel } from "@/components/app/task-panel";
 import {
   EmptyState,
   KidAvatar,
@@ -177,16 +179,15 @@ function ChildDetail() {
       </div>
 
       <Tabs defaultValue="info">
-        <TabsList className="mb-4 h-auto flex-wrap">
-          <TabsTrigger value="info">Informações</TabsTrigger>
+        <TabsList className="mb-4 h-auto w-full justify-start overflow-x-auto">
+          <TabsTrigger value="info">Perfil</TabsTrigger>
           {can(role, "saude") && (
-            <TabsTrigger value="saude">Saúde e cuidados</TabsTrigger>
+            <TabsTrigger value="saude">Saúde</TabsTrigger>
           )}
-          <TabsTrigger value="familia">Família</TabsTrigger>
-          <TabsTrigger value="autorizados">Autorizados</TabsTrigger>
-          <TabsTrigger value="presenca">Presença</TabsTrigger>
-          <TabsTrigger value="chamadas">Chamadas</TabsTrigger>
-          <TabsTrigger value="crachas">Crachás</TabsTrigger>
+          <TabsTrigger value="familia">Família e retirada</TabsTrigger>
+          <TabsTrigger value="historico">Histórico</TabsTrigger>
+          <TabsTrigger value="ocorrencias">Ocorrências</TabsTrigger>
+          <TabsTrigger value="tarefas">Tarefas</TabsTrigger>
         </TabsList>
 
         <TabsContent value="info">
@@ -225,7 +226,7 @@ function ChildDetail() {
           </TabsContent>
         )}
 
-        <TabsContent value="familia">
+        <TabsContent value="familia" className="space-y-4">
           <Panel title={family ? `${family.name} • ${family.code}` : "Família"}>
             {family ? (
               <>
@@ -267,9 +268,7 @@ function ChildDetail() {
               <EmptyState title="Sem família vinculada" />
             )}
           </Panel>
-        </TabsContent>
 
-        <TabsContent value="autorizados">
           <Panel title="Quem pode retirar esta criança">
             <p className="mb-3 text-sm text-muted-foreground">
               Nem todo familiar cadastrado está autorizado. A autorização
@@ -341,8 +340,8 @@ function ChildDetail() {
           </Panel>
         </TabsContent>
 
-        <TabsContent value="presenca">
-          <Panel title="Histórico de presença">
+        <TabsContent value="historico" className="space-y-4">
+          <Panel title="Presença">
             {att.length === 0 ? (
               <EmptyState title="Sem registros de presença" />
             ) : (
@@ -365,10 +364,8 @@ function ChildDetail() {
               </ul>
             )}
           </Panel>
-        </TabsContent>
 
-        <TabsContent value="chamadas">
-          <Panel title="Histórico de chamadas">
+          <Panel title="Chamadas">
             {calls.length === 0 ? (
               <EmptyState title="Nenhuma chamada" />
             ) : (
@@ -393,9 +390,7 @@ function ChildDetail() {
               </ul>
             )}
           </Panel>
-        </TabsContent>
 
-        <TabsContent value="crachas">
           <Panel title="Crachás emitidos">
             {badges.length === 0 ? (
               <EmptyState
@@ -430,6 +425,25 @@ function ChildDetail() {
                     </li>
                   ))}
               </ul>
+            )}
+          </Panel>
+        </TabsContent>
+
+        <TabsContent value="ocorrencias">
+          <Panel title="Ocorrências na sala">
+            <IncidentPanel childId={c.id} />
+          </Panel>
+        </TabsContent>
+
+        <TabsContent value="tarefas">
+          <Panel title={cls ? `Tarefas — ${cls.name}` : "Tarefas"}>
+            {cls ? (
+              <TaskPanel classId={cls.id} />
+            ) : (
+              <EmptyState
+                title="Sem turma"
+                text="Vincule a criança a uma turma para ver as tarefas dela."
+              />
             )}
           </Panel>
         </TabsContent>

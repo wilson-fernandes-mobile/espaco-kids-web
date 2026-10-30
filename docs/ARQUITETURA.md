@@ -60,7 +60,7 @@ A conta é criada **antes** de ler `codes` (a leitura exige login).
 Todo dado de negócio vive em `tenants/{churchId}/...`; o papel é **por igreja** (`tenants/{churchId}/members/{uid}.role`). Tabela completa de coleções, quem escreve e decisões: [`.claude/CONTEXTO.md`](../.claude/CONTEXTO.md), seção 3. Resumo:
 
 - Topo: `users/{uid}` (perfil global + tokens de push), `users/{uid}/memberships/{churchId}` (lista "minhas igrejas"), `codes/{código}` (código → igreja; só `get`), `tenants/{churchId}`.
-- Por igreja: `members`, `invites`, `joinCodes`, `familyLinks`, `pendingLinks`, `children`, `families`, `guardians`, `authorized`, `health`, `classes`, `roomStaff`, `badges`, `attendance`, `presence`, `calls`, `checkinRequests`, `notifications`, `audit`, `settings`, `meta`, `billing`.
+- Por igreja: `members`, `invites`, `joinCodes`, `familyLinks`, `pendingLinks`, `children`, `families`, `guardians`, `authorized`, `health`, `classes`, `roomStaff`, `badges`, `attendance`, `presence`, `calls`, `incidents`, `tasks`, `checkinRequests`, `notifications`, `audit`, `settings`, `meta`, `billing`.
 
 ### Decisões importantes
 - **Sem entrada duplicada:** `presence/{childId}` + transação (`runTransaction`).

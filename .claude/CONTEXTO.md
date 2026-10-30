@@ -62,6 +62,8 @@ Subcoleções de `tenants/{churchId}`:
 | `attendance` | histórico de entradas/saídas | recepção+ |
 | `presence/{childId}` | "presente agora" (trava anti-duplicidade) | recepção+ |
 | `calls` | chamadas aos responsáveis (+ `history`) | equipe; família só marca "estou indo" |
+| `incidents` | ocorrências da sala (`childId`, `kind`, `text`, `involvedChildIds`, `authorId`, `authorName`, `createdAt`); **família nunca lê** | equipe cria; edita/apaga o autor ou coordenação |
+| `tasks` | tarefas por turma (`classId`, `title`, `description`, `dueDate`, `links[{label,url}]`, `authorId`, `createdAt`); equipe lê, família lê (app filtra pela turma dos filhos) | coordenação/admin em qualquer turma; professor nas turmas dele |
 | `checkinRequests` | pedidos da família | família cria/cancela; recepção resolve |
 | `notifications` | central de eventos | equipe |
 | `audit` | auditoria imutável (create-only) | equipe; leitura só coordenação |
@@ -85,9 +87,11 @@ Definidos em `src/lib/billing.ts` (limites) e `src/lib/site.ts` (preços exibido
 | Plano | Limite de crianças ativas | Preço (site) |
 |---|---|---|
 | Início | 30 | grátis |
-| Crescimento | 100 | R$ 45,90/mês |
-| Expansão | 250 | R$ 79,90/mês |
-| Ilimitado | sem limite | R$ 149,90/mês (ou sob consulta) |
+| Crescimento | 100 | R$ 250,00/mês |
+| Expansão | 250 | R$ 625,00/mês |
+| Ilimitado | sem limite | sob consulta |
+
+Regra de preço: R$ 2,50 por criança do limite da faixa (100 × 2,50 e 250 × 2,50), definida em 2026-10-27 a partir da indicação do vendedor.
 
 Toda igreja nova tem **14 dias de teste** com o limite do Expansão; depois volta ao Início até assinar. `resolvePlan()` decide o estado. O doc `billing/current` só pode ser escrito pelo servidor.
 **Estado:** a cobrança automática (Mercado Pago) **ainda não está implementada** neste projeto — hoje o pagamento é combinado por contato e o doc é preenchido manualmente (Admin SDK/console). Preços são valores de partida a confirmar.
@@ -136,6 +140,7 @@ Skills úteis em `.claude/skills/`: `firebase-deploy`, `novo-modulo`, `verificar
 | `onCallCreated` | doc novo em `calls` | push para a família da criança |
 | `onCheckinRequestCreated` | doc novo em `checkinRequests` | push para recepção/coordenação/admin |
 | `onCallAcknowledged` | `calls` atualizado | quando a família marca "estou indo", avisa quem fez a chamada (ou a recepção/coordenação/admin se não houver autor) |
+| `onTaskCreated` | doc novo em `tasks` | push para as famílias das crianças ativas da turma (só o título; detalhes e links no app) |
 | `importFamily` | callable | leva filhos (e responsáveis/autorizados, opcionalmente saúde) de uma igreja para outra do mesmo usuário |
 | `claimFamilyLink` | callable | quem ficou pendente entra na família importada sem digitar código |
 | `deleteMyAccount` | callable | apaga a conta (vínculos, perfil, tokens, login); exige login recente (5 min); não deixa igreja sem admin |

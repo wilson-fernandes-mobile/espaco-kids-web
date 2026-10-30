@@ -265,6 +265,40 @@ service cloud.firestore {
         allow update: if false;
       }
 
+      // Ocorrências da sala: a equipe lê e registra. A família só lê as que a
+      // equipe marcou para enviar aos pais (sharedWithFamily) e dos próprios filhos.
+      // Edita/apaga quem registrou; a coordenação modera.
+      match /incidents/{id} {
+        allow read: if isStaff(churchId)
+          || (isFamily(churchId) && resource.data.get('sharedWithFamily', false) == true
+              && resource.data.get('familyId', '') == myFamily(churchId));
+        allow create: if isStaff(churchId) && request.resource.data.authorId == request.auth.uid;
+        allow update: if isStaff(churchId)
+          && (resource.data.authorId == request.auth.uid || isCoord(churchId))
+          && request.resource.data.authorId == resource.data.authorId;
+        allow delete: if isStaff(churchId)
+          && (resource.data.authorId == request.auth.uid || isCoord(churchId));
+      }
+
+      // Tarefas da turma: coordenação/admin em qualquer turma; professor só nas
+      // turmas dele (classIds). Recepção só lê. A família lê (o app mostra só as
+      // turmas dos filhos; o conteúdo é o que o professor quis compartilhar).
+      function canTeach(churchId, classId) {
+        return isCoord(churchId)
+          || (role(churchId) == 'professor' && classId in memberData(churchId).classIds);
+      }
+      match /tasks/{id} {
+        allow read: if isStaff(churchId) || isFamily(churchId);
+        allow create: if isMember(churchId)
+          && canTeach(churchId, request.resource.data.classId)
+          && request.resource.data.authorId == request.auth.uid;
+        allow update: if isMember(churchId)
+          && canTeach(churchId, resource.data.classId)
+          && canTeach(churchId, request.resource.data.classId)
+          && request.resource.data.authorId == resource.data.authorId;
+        allow delete: if isMember(churchId) && canTeach(churchId, resource.data.classId);
+      }
+
       match /calls/{id} {
         allow read: if isStaff(churchId) || (isFamily(churchId) && resource.data.familyId == myFamily(churchId));
         allow create: if isStaff(churchId);

@@ -4,7 +4,7 @@
 // Os tokens FCM ficam no perfil global `users/{uid}.fcmTokens` (um aparelho
 // serve para todas as igrejas da pessoa); o papel vem de
 // `tenants/{churchId}/members/{uid}`.
-const { onDocumentCreated, onDocumentUpdated } = require("firebase-functions/v2/firestore");
+const { onDocumentCreated, onDocumentUpdated, onDocumentWritten } = require("firebase-functions/v2/firestore");
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { initializeApp } = require("firebase-admin/app");
 const { getFirestore, FieldValue } = require("firebase-admin/firestore");
@@ -87,7 +87,8 @@ async function sendCallAlarm(userDocs, { title, body, data }, stop = false) {
           android: { priority: "high", ttl: 5 * 60 * 1000 },
           apns: {
             headers: { "apns-priority": "10" },
-            payload: { aps: { alert: { title, body }, sound: "default", "interruption-level": "time-sensitive" } },
+            // sirene.wav (28 s) vem dentro do app; o reenvio a cada 30 s emenda uma na outra.
+            payload: { aps: { alert: { title, body }, sound: "sirene.wav", "interruption-level": "time-sensitive" } },
           },
         };
     jobs.push(m.sendEachForMulticast(msg).then((res) => pruneDead(res, alarm, owners)));
@@ -192,6 +193,50 @@ exports.onCallAcknowledged = onDocumentUpdated({ document: "tenants/{churchId}/c
       body: `O responsavel de ${name} esta indo`,
     },
     data: { type: "call-ack", callId: id, churchId },
+  });
+});
+
+// Ocorrencia enviada aos pais (sharedWithFamily passou a true): avisa a familia.
+// O aviso e generico: o conteudo so aparece dentro do app.
+exports.onIncidentShared = onDocumentWritten({ document: "tenants/{churchId}/incidents/{id}", region: REGION }, async (event) => {
+  const after = event.data && event.data.after && event.data.after.data();
+  const before = event.data && event.data.before && event.data.before.data();
+  if (!after || after.sharedWithFamily !== true || (before && before.sharedWithFamily === true)) return;
+  if (!after.familyId) return;
+  const { churchId, id } = event.params;
+  const church = db.doc(`tenants/${churchId}`);
+  const [child, members] = await Promise.all([
+    church.collection("children").doc(after.childId).get(),
+    church.collection("members").where("familyId", "==", after.familyId).get(),
+  ]);
+  const name = (child.exists && (child.get("nickname") || child.get("fullName"))) || "Seu filho";
+  await send(await userDocsOf(members.docs.filter((m) => m.get("active") === true)), {
+    notification: { title: `Novo aviso sobre ${name}`, body: "A equipe enviou um relato. Abra o app para ver." },
+    data: { type: "incident", incidentId: id, churchId, childId: String(after.childId || "") },
+  });
+});
+
+// Tarefa nova na turma: avisa as familias das criancas ativas daquela turma.
+// O aviso so traz o titulo; a descricao e os links aparecem dentro do app.
+exports.onTaskCreated = onDocumentCreated({ document: "tenants/{churchId}/tasks/{id}", region: REGION }, async (event) => {
+  const task = event.data && event.data.data();
+  if (!task || !task.classId) return;
+  const { churchId, id } = event.params;
+  const church = db.doc(`tenants/${churchId}`);
+  const kids = await church.collection("children").where("classId", "==", task.classId).get();
+  const familyIds = [...new Set(kids.docs.filter((k) => k.get("status") !== "inativo").map((k) => k.get("familyId")).filter(Boolean))];
+  if (!familyIds.length) return;
+  const cls = await church.collection("classes").doc(task.classId).get();
+  const className = (cls.exists && cls.get("name")) || "turma";
+  const members = [];
+  // `in` aceita ate 30 valores por consulta.
+  for (let i = 0; i < familyIds.length; i += 30) {
+    const snap = await church.collection("members").where("familyId", "in", familyIds.slice(i, i + 30)).get();
+    members.push(...snap.docs.filter((m) => m.get("active") === true));
+  }
+  await send(await userDocsOf(members), {
+    notification: { title: `Nova tarefa — ${className}`, body: String(task.title || "Abra o app para ver.").slice(0, 120) },
+    data: { type: "task", taskId: id, churchId, classId: String(task.classId) },
   });
 });
 
@@ -374,6 +419,7 @@ async function deleteFamilyData(churchId, familyId) {
       t.doc(`presence/${k.id}`).delete(),
       deleteQuery(t.collection("attendance").where("childId", "==", k.id)),
       deleteQuery(t.collection("badges").where("childId", "==", k.id)),
+      deleteQuery(t.collection("incidents").where("childId", "==", k.id)),
       deleteQuery(t.collection("checkinRequests").where("childId", "==", k.id)),
     ]);
     await k.ref.delete();

@@ -114,6 +114,52 @@ export interface GuardianCall {
   history: { status: CallStatus; at: string }[];
 }
 
+export type IncidentKind =
+  | "briga"
+  | "mordida"
+  | "comportamento"
+  | "machucado"
+  | "outro";
+
+/** Ocorrência na sala, registrada pela equipe. Nunca visível à família. */
+export interface Incident {
+  id: string;
+  childId: string;
+  classId: string;
+  kind: IncidentKind;
+  text: string;
+  /** Outras crianças envolvidas (ex.: quem foi mordido). */
+  involvedChildIds: string[];
+  familyId?: string;
+  /** A família só vê quando a equipe marca para enviar aos pais. */
+  sharedWithFamily?: boolean;
+  authorId: string;
+  authorName: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface TaskLink {
+  label: string;
+  url: string;
+}
+
+/** Tarefa da turma: a família da turma vê no app e recebe um aviso ao criar. */
+export interface ClassTask {
+  id: string;
+  classId: string;
+  title: string;
+  description: string;
+  /** Data de entrega (AAAA-MM-DD), opcional. */
+  dueDate?: string;
+  /** Links para documentos ou imagens (Drive, site etc.). */
+  links: TaskLink[];
+  authorId: string;
+  authorName: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
 export type NotificationCategory =
   "chamada" | "presenca" | "alerta" | "comunicado" | "administrativo";
 
@@ -168,6 +214,8 @@ export interface AppState {
   badges: Badge[];
   attendance: Attendance[];
   calls: GuardianCall[];
+  incidents: Incident[];
+  tasks: ClassTask[];
   notifications: AppNotification[];
   audit: AuditEntry[];
   users: AppUser[];

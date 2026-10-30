@@ -18,7 +18,7 @@ export interface Plan {
   highlight?: boolean;
 }
 
-/** Faixas por número de crianças cadastradas (valores de partida, a confirmar). */
+/** Faixas por número de crianças cadastradas (R$ 2,50 por criança da faixa). */
 export const PLANS: Plan[] = [
   {
     name: "Início",
@@ -33,7 +33,7 @@ export const PLANS: Plan[] = [
   },
   {
     name: "Crescimento",
-    price: "R$ 45,90",
+    price: "R$ 250,00",
     suffix: "/mês",
     limit: "Até 100 crianças",
     features: [
@@ -45,7 +45,7 @@ export const PLANS: Plan[] = [
   },
   {
     name: "Expansão",
-    price: "R$ 79,90",
+    price: "R$ 625,00",
     suffix: "/mês",
     limit: "Até 250 crianças",
     features: [
@@ -58,8 +58,7 @@ export const PLANS: Plan[] = [
   },
   {
     name: "Ilimitado",
-    price: "R$ 149,90",
-    suffix: "/mês",
+    price: "Sob consulta",
     limit: "Acima de 250 crianças",
     features: [
       "Tudo do Expansão",
