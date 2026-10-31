@@ -14,6 +14,7 @@ import {
   KeyRound,
   RefreshCw,
 } from "lucide-react";
+import { ChurchQr } from "@/components/app/church-qr";
 import { useStore } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
 import { can, PERMISSIONS, ROLE_LABEL } from "@/lib/domain/rules";
@@ -245,12 +246,13 @@ function JoinCodePanel() {
     <Panel title="Código de entrada dos pais" className="mb-6">
       <p className="mb-4 text-sm text-muted-foreground">
         Um código só para a igreja inteira. Os pais baixam o app, tocam em{" "}
-        <strong>Criar conta → Sou da família</strong>, digitam este código e{" "}
+        <strong>Criar conta → Sou da família</strong>, digitam este código (ou leem o QR Code) e{" "}
         <strong>eles mesmos cadastram a família e as crianças</strong>. A equipe
         só precisa passar o código.
       </p>
       {code ? (
         <div className="flex flex-wrap items-center gap-3">
+          <ChurchQr code={code} />
           <code className="rounded-lg border bg-muted px-4 py-2.5 font-mono text-lg font-bold tracking-widest select-all">
             {code}
           </code>
@@ -309,6 +311,7 @@ function InvitePanel() {
       </p>
       {code ? (
         <div className="flex flex-wrap items-center gap-3">
+          <ChurchQr code={code} />
           <code className="rounded-lg border bg-muted px-4 py-2.5 font-mono text-lg font-bold tracking-widest select-all">
             {code}
           </code>

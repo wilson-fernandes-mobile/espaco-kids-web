@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_role.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../shared/widgets/code_scanner_sheet.dart';
 import '../../../../shared/widgets/feedback.dart';
 import '../../../tenant/data/tenant_repository.dart';
 import '../../../tenant/presentation/providers/tenant_providers.dart';
@@ -65,6 +66,16 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     }
   }
 
+  Future<void> _scan() async {
+    final code = await scanChurchCode(context);
+    if (code == null || !mounted) return;
+    setState(() {
+      _code.text = code;
+      // IG-/LK- são da família; KIDS- é da equipe.
+      _mode = code.startsWith('KIDS-') ? _Mode.staff : _Mode.family;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final family = _mode == _Mode.family;
@@ -114,6 +125,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                   : 'Código de convite',
                           hintText: family ? 'IG-XXXXXX' : 'KIDS-XXXXXX',
                           helperMaxLines: 4,
+                          suffixIcon: IconButton(
+                            tooltip: 'Ler QR Code da igreja',
+                            icon: const Icon(Icons.qr_code_scanner),
+                            onPressed: _scan,
+                          ),
                           helperText:
                               family
                                   ? 'IG-… com a equipe da igreja, ou LK-… de quem já cadastrou a família'
