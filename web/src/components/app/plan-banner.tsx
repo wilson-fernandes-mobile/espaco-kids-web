@@ -11,9 +11,12 @@ export function PlanBanner() {
     texto =
       plan.trialDaysLeft <= 3
         ? `Seu teste grátis termina em ${plan.trialDaysLeft} ${plan.trialDaysLeft === 1 ? "dia" : "dias"}.`
-        : `Teste grátis: faltam ${plan.trialDaysLeft} dias. Depois, a igreja continua no plano Início (até 30 crianças).`;
+        : `Teste grátis: faltam ${plan.trialDaysLeft} dias. Depois, a igreja continua no plano Início (até 20 crianças).`;
   else if (plan.mode === "gratis")
-    texto = `Plano Início: ${plan.used} de ${plan.limit} crianças.`;
+    texto =
+      plan.lockedIds.size > 0
+        ? `Plano Início: ${plan.used} crianças cadastradas, limite de ${plan.limit}. ${plan.lockedIds.size} ${plan.lockedIds.size === 1 ? "cadastro está bloqueado" : "cadastros estão bloqueados"} para check-in até assinar um plano maior (nada foi apagado).`
+        : `Plano Início: ${plan.used} de ${plan.limit} crianças.`;
   else if (perto)
     texto = `Você usou ${plan.used} de ${plan.limit} crianças do plano ${plan.name}.`;
   if (!texto) return null;

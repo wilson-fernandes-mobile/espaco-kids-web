@@ -14,6 +14,10 @@ import { useStore } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
 import { can, openAttendance } from "@/lib/domain/rules";
 import { callMessage } from "@/lib/whatsapp";
+import {
+  CHILD_SEARCH_PLACEHOLDER,
+  makeChildMatcher,
+} from "@/lib/domain/search";
 import { WhatsAppButton } from "@/components/app/whatsapp-button";
 import { CALL_REASON, CALL_STATUS, ago, dateTime } from "@/lib/domain/labels";
 import {
@@ -27,6 +31,7 @@ import {
 import {
   ErrorBanner,
   PageLoading,
+  SearchBox,
   attempt,
   selectCls,
 } from "@/components/app/page-bits";
@@ -116,16 +121,34 @@ function CallsPage() {
   const inScope = (classId: string) =>
     !myClasses || myClasses.includes(classId);
 
+  const [q, setQ] = useState("");
   const present = useMemo(
     () =>
       state.children
         .filter(
           (c) => openAttendance(state.attendance, c.id) && inScope(c.classId),
         )
+        .filter(makeChildMatcher(state, q))
         .sort((a, b) => a.fullName.localeCompare(b.fullName, "pt-BR")),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [state, myClasses?.join(",")],
+    [state, q, myClasses?.join(",")],
   );
+  // Presentes agrupados por turma, na ordem das turmas (Berçário, Juniors…).
+  const groups = useMemo(() => {
+    const order = new Map(state.classes.map((c, i) => [c.id, i]));
+    const map = new Map<string, Child[]>();
+    for (const c of present) {
+      const k = c.classId ?? "";
+      map.set(k, [...(map.get(k) ?? []), c]);
+    }
+    return [...map.entries()]
+      .sort(([a], [b]) => (order.get(a) ?? 999) - (order.get(b) ?? 999))
+      .map(([classId, kids]) => ({
+        classId,
+        name: state.classes.find((x) => x.id === classId)?.name ?? "Sem turma",
+        kids,
+      }));
+  }, [present, state.classes]);
   const calls = useMemo(() => {
     const [start, end] = rangeOf(period, from, to);
     const list = state.calls.filter((c) => {
@@ -194,44 +217,71 @@ function CallsPage() {
           }
           className="lg:col-span-2"
         >
+          <div className="mb-4">
+            <SearchBox
+              value={q}
+              onChange={setQ}
+              placeholder={CHILD_SEARCH_PLACEHOLDER}
+            />
+          </div>
           {present.length === 0 ? (
             <EmptyState
-              title="Nenhuma criança presente"
+              title={
+                q.trim()
+                  ? "Nenhuma criança presente encontrada"
+                  : "Nenhuma criança presente"
+              }
               text={
-                role === "professor" && !myClasses?.length
-                  ? "Você ainda não foi vinculado a uma turma. Fale com a coordenação."
-                  : "Faça o check-in para que apareçam aqui."
+                q.trim()
+                  ? "Confira a busca (nome, apelido, código, turma ou responsável)."
+                  : role === "professor" && !myClasses?.length
+                    ? "Você ainda não foi vinculado a uma turma. Fale com a coordenação."
+                    : "Faça o check-in para que apareçam aqui."
               }
             />
           ) : (
-            <ul className="-my-2 max-h-[32rem] divide-y overflow-y-auto">
-              {present.map((c) => (
-                <li key={c.id} className="flex items-center gap-3 py-2.5">
-                  <KidAvatar child={c} size="sm" />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{c.fullName}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {clsName(c.classId)}
-                    </p>
-                  </div>
-                  {hasOpen(c.id) ? (
-                    <StatusPill
-                      value="pendente"
-                      label="Chamada aberta"
-                      tone="warning"
-                    />
-                  ) : (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setTarget(c)}
-                    >
-                      <BellRing /> Chamar
-                    </Button>
-                  )}
-                </li>
+            <div className="max-h-[32rem] space-y-5 overflow-y-auto">
+              {groups.map((g) => (
+                <section key={g.classId}>
+                  <h3 className="mb-2 flex items-center gap-2 border-l-4 border-primary pl-2 text-sm font-bold">
+                    {g.name}
+                    <span className="rounded-full bg-muted px-2 text-xs font-medium text-muted-foreground">
+                      {g.kids.length}
+                    </span>
+                  </h3>
+                  <ul className="divide-y border-l-2 border-dashed border-primary/30 pl-3">
+                    {g.kids.map((c) => (
+                      <li key={c.id} className="flex items-center gap-3 py-2.5">
+                        <KidAvatar child={c} size="sm" />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">
+                            {c.fullName}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {clsName(c.classId)}
+                          </p>
+                        </div>
+                        {hasOpen(c.id) ? (
+                          <StatusPill
+                            value="pendente"
+                            label="Chamada aberta"
+                            tone="warning"
+                          />
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setTarget(c)}
+                          >
+                            <BellRing /> Chamar
+                          </Button>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
               ))}
-            </ul>
+            </div>
           )}
         </Panel>
 

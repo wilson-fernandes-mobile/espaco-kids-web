@@ -1,4 +1,7 @@
-import { foldText } from "@/lib/utils";
+import {
+  CHILD_SEARCH_PLACEHOLDER,
+  makeChildMatcher,
+} from "@/lib/domain/search";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
@@ -54,23 +57,8 @@ function ChildrenPage() {
   const [sit, setSit] = useState("");
 
   const rows = useMemo(() => {
-    const term = foldText(q.trim());
-    // Nomes dos responsáveis de cada família, para buscar a criança por eles.
-    const guardiansOf = new Map<string, string>();
-    for (const g of state.guardians)
-      guardiansOf.set(
-        g.familyId,
-        `${guardiansOf.get(g.familyId) ?? ""} ${foldText(g.fullName)}`,
-      );
     return state.children
-      .filter(
-        (c) =>
-          !term ||
-          foldText(c.fullName).includes(term) ||
-          foldText(c.nickname).includes(term) ||
-          foldText(c.code).includes(term) ||
-          (guardiansOf.get(c.familyId) ?? "").includes(term),
-      )
+      .filter(makeChildMatcher(state, q))
       .filter((c) => !cls || c.classId === cls)
       .filter((c) => {
         if (!age) return true;
@@ -122,7 +110,7 @@ function ChildrenPage() {
           <SearchBox
             value={q}
             onChange={setQ}
-            placeholder="Buscar por criança, responsável ou código"
+            placeholder={CHILD_SEARCH_PLACEHOLDER}
           />
           <select
             aria-label="Turma"

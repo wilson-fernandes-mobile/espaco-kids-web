@@ -374,7 +374,7 @@ function SettingsPage() {
                       value={d.badge.heightMm}
                       onChange={(e) =>
                         nested("badge", {
-                          heightMm: num(e.target.value, 30, 120, 55),
+                          heightMm: num(e.target.value, 20, 120, 29),
                         })
                       }
                     />

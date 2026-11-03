@@ -23,7 +23,7 @@ export const PLANS: Plan[] = [
   {
     name: "Início",
     price: "Grátis",
-    limit: "Até 30 crianças",
+    limit: "Até 20 crianças",
     features: [
       "Check-in e check-out por QR",
       "Chamadas aos responsáveis",
@@ -76,7 +76,7 @@ export const FAQ = [
   { q: "Existe fidelidade?", a: "Não. Você cancela quando quiser, sem multa." },
   {
     q: "Como funciona o teste?",
-    a: "Toda igreja nova ganha 14 dias com os recursos do plano Expansão, sem cartão. Depois, você assina ou continua no plano Início, que é grátis até 30 crianças.",
+    a: "Toda igreja nova ganha 14 dias com os recursos do plano Expansão, sem cartão. Depois, você assina ou continua no plano Início, que é grátis até 20 crianças.",
   },
   {
     q: "Os pais precisam pagar alguma coisa?",

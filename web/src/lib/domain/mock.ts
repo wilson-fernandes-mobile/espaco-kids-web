@@ -426,7 +426,7 @@ export const DEFAULT_SETTINGS: ChurchSettings = {
   idPrefix: "CR",
   badge: {
     widthMm: 90,
-    heightMm: 55,
+    heightMm: 29,
     showClass: true,
     showFamily: true,
     validityDays: 365,

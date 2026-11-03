@@ -37,7 +37,7 @@ import {
 } from "firebase/auth";
 import { db, getSecondaryAuth, getSecondaryDb } from "./firebase/client";
 import { useAuth } from "./auth";
-import { resolvePlan, type BillingDoc, type PlanState } from "./billing";
+import { LOCKED_REASON, lockedChildIds, resolvePlan, type BillingDoc, type PlanState } from "./billing";
 import { DEFAULT_SETTINGS, createSeed } from "./domain/mock";
 import {
   can,
@@ -82,7 +82,7 @@ interface Ctx {
   unit: string;
   setUnit: (u: string) => void;
   /** Plano da igreja (teste grátis, pago ou Início) e crianças ativas. */
-  plan: PlanState & { used: number };
+  plan: PlanState & { used: number; lockedIds: Set<string> };
   saveChild: (c: Save<Child, "code">) => Promise<Child>;
   saveCare: (childId: string, p: CareProfile, text: string) => Promise<void>;
   saveFamily: (f: Save<Family, "code">) => Promise<Family>;
@@ -298,13 +298,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         tdoc("settings", "church"),
         (snap) => {
           if (snap.exists())
-            setData((s) => ({
-              ...s,
-              settings: {
+            setData((s) => {
+              const loaded = {
                 ...DEFAULT_SETTINGS,
                 ...(snap.data() as ChurchSettings),
-              },
-            }));
+              };
+              // Migração: o antigo padrão 90×55 mm vira 90×29 mm (etiqueta
+              // Brother DK-11201). Tamanhos personalizados são mantidos.
+              if (loaded.badge?.widthMm === 90 && loaded.badge?.heightMm === 55)
+                loaded.badge = { ...loaded.badge, heightMm: 29 };
+              return { ...s, settings: loaded };
+            });
           mark("settings");
         },
         fail("settings"),
@@ -350,10 +354,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [data, health, care],
   );
   const used = state.children.filter((c) => c.status !== "inativo").length;
-  const plan = useMemo(
-    () => ({ ...resolvePlan(tenantCreated, billing), used }),
-    [tenantCreated, billing, used],
-  );
+  const plan = useMemo(() => {
+    const p = resolvePlan(tenantCreated, billing);
+    return {
+      ...p,
+      used,
+      lockedIds: lockedChildIds(state.children, p.limit),
+    };
+  }, [tenantCreated, billing, used, state.children]);
   const planRef = useRef(plan);
   planRef.current = plan;
   const stateRef = useRef(state);
@@ -581,6 +589,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         const s = stateRef.current;
         const child = s.children.find((c) => c.id === childId);
         if (!child) return { ok: false, reason: "Criança não encontrada." };
+        if (planRef.current.lockedIds.has(child.id))
+          return { ok: false, reason: LOCKED_REASON };
         const r = validateCheckIn(s, child);
         if (!r.ok) return r;
         const attRef = doc(tcol("attendance"));

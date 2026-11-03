@@ -10,7 +10,11 @@ import type {
   Family,
 } from "@/lib/domain/types";
 
-/** Crachá imprimível. O QR contém só um token opaco e aleatório — nenhum dado pessoal. */
+/**
+ * Crachá imprimível, pensado para etiqueta Brother 29×90 mm (DK-11201,
+ * impressora QL-800). O QR contém só um token opaco e aleatório — nenhum dado
+ * pessoal. Em tamanhos maiores o layout se mantém, apenas com mais espaço.
+ */
 export function BadgeCard({
   child,
   badge,
@@ -31,53 +35,55 @@ export function BadgeCard({
   return (
     <div
       className={cn(
-        "badge-card relative flex overflow-hidden rounded-xl border-2 border-primary/70 bg-white text-slate-900",
+        "badge-card relative flex overflow-hidden border border-slate-800 bg-white text-slate-900",
         className,
       )}
       style={{ width: `${widthMm}mm`, height: `${heightMm}mm` }}
     >
-      <div className="flex min-w-0 flex-1 flex-col justify-between p-[3.5mm]">
-        <div className="flex items-center gap-1.5 text-[8pt] font-bold uppercase tracking-wide text-primary">
+      <div className="flex min-w-0 flex-1 flex-col justify-between px-[2mm] py-[1.5mm]">
+        <div className="flex items-center gap-1 text-[6pt] font-bold uppercase leading-none tracking-wide">
           {settings.logoUrl ? (
             <img
               src={settings.logoUrl}
               alt=""
-              className="size-4 object-contain"
+              className="h-[3mm] w-[3mm] object-contain"
             />
           ) : (
-            <Church className="size-3.5" />
+            <Church className="h-[3mm] w-[3mm]" />
           )}
           <span className="truncate">{settings.name}</span>
         </div>
         <div className="min-w-0">
-          <p className="truncate text-[15pt] font-extrabold leading-tight">
+          <p className="truncate text-[13pt] font-extrabold leading-none">
             {child.nickname}
           </p>
-          <p className="truncate text-[8pt] text-slate-600">{child.fullName}</p>
+          <p className="mt-[0.5mm] truncate text-[6.5pt] leading-none text-slate-700">
+            {child.fullName}
+          </p>
         </div>
-        <div className="space-y-0.5 text-[8pt]">
-          <p className="font-mono font-bold">{child.code}</p>
+        <div className="flex items-center gap-1.5 text-[7pt] leading-none">
+          <span className="font-mono font-bold">{child.code}</span>
           {showFamily && family && (
-            <p className="truncate text-slate-600">Família {family.code}</p>
+            <span className="truncate text-slate-700">· Fam. {family.code}</span>
           )}
           {showClass && cls && (
-            <p className="inline-block rounded-full bg-primary/10 px-2 py-0.5 font-semibold text-primary">
+            <span className="truncate rounded-sm border border-slate-800 px-1 py-px font-bold">
               {cls.name}
-            </p>
+            </span>
           )}
         </div>
       </div>
-      <div className="flex w-[34%] shrink-0 flex-col items-center justify-center gap-1 bg-primary/5 p-[2.5mm]">
+      <div className="flex shrink-0 items-center justify-center p-[1.5mm]">
         <QRCodeSVG
           value={`${QR_PREFIX}${badge.token}`}
           level="M"
-          className="h-auto w-full"
+          marginSize={0}
+          style={{ height: `${Math.max(heightMm - 5, 10)}mm`, width: "auto", aspectRatio: "1" }}
         />
-        <p className="text-[6pt] text-slate-500">Ministério Infantil</p>
       </div>
       {inactive && (
         <div className="absolute inset-0 grid place-items-center bg-white/75">
-          <span className="-rotate-12 rounded border-4 border-destructive px-3 py-1 text-xl font-black uppercase text-destructive">
+          <span className="-rotate-12 rounded border-2 border-destructive px-2 py-0.5 text-sm font-black uppercase text-destructive">
             {badge.status}
           </span>
         </div>

@@ -86,7 +86,7 @@ Definidos em `web/src/lib/billing.ts` (limites) e `web/src/lib/site.ts` (preços
 
 | Plano | Limite de crianças ativas | Preço (site) |
 |---|---|---|
-| Início | 30 | grátis |
+| Início | 20 | grátis |
 | Crescimento | 100 | R$ 250,00/mês |
 | Expansão | 250 | R$ 625,00/mês |
 | Ilimitado | sem limite | sob consulta |

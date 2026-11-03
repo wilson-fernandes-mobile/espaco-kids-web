@@ -387,7 +387,8 @@ function ClassesPage() {
               <RoomTag
                 cls={tag}
                 churchId={churchId}
-                churchName={churchName ?? undefined}
+                churchName={state.settings.name || churchName || undefined}
+                logoUrl={state.settings.logoUrl || undefined}
               />
             )}
           </div>
@@ -414,7 +415,8 @@ function ClassesPage() {
                 key={c.id}
                 cls={c}
                 churchId={churchId}
-                churchName={churchName ?? undefined}
+                churchName={state.settings.name || churchName || undefined}
+                logoUrl={state.settings.logoUrl || undefined}
               />
             ))}
         </div>

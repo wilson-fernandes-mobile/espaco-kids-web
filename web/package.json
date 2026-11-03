@@ -57,6 +57,7 @@
     "firebase": "^13.0.0",
     "input-otp": "^1.4.2",
     "jsqr": "^1.4.0",
+    "lottie-web": "5.12.2",
     "lucide-react": "^0.575.0",
     "qrcode.react": "^4.2.0",
     "react": "^19.2.0",

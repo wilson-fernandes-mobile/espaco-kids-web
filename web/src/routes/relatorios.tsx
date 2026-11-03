@@ -10,6 +10,10 @@ import {
   YAxis,
 } from "recharts";
 import { BarChart3, Download, Printer } from "lucide-react";
+import {
+  CHILD_SEARCH_PLACEHOLDER,
+  makeChildMatcher,
+} from "@/lib/domain/search";
 import { useStore } from "@/lib/store";
 import {
   can,
@@ -83,6 +87,12 @@ function ReportsPage() {
       state.classes.find((c) => c.id === id)?.name ?? "—";
     const match = (name: string) =>
       !q.trim() || name.toLowerCase().includes(q.trim().toLowerCase());
+    // Busca padrão de crianças: nome, apelido, código, turma e responsáveis.
+    const matchKid = makeChildMatcher(state, q);
+    const matchKidId = (id: string) => {
+      const c = kid(id);
+      return c ? matchKid(c) : !q.trim();
+    };
     const classOk = (id?: string) => !cls || id === cls;
 
     switch (kind) {
@@ -93,7 +103,7 @@ function ReportsPage() {
             (a) =>
               inRange(a.checkInAt) &&
               classOk(kid(a.childId)?.classId) &&
-              match(kid(a.childId)?.fullName ?? ""),
+              matchKidId(a.childId),
           )
           .forEach((a) => {
             const d = a.checkInAt.slice(0, 10);
@@ -135,7 +145,7 @@ function ReportsPage() {
               (a) =>
                 inRange(a.checkInAt) &&
                 classOk(kid(a.childId)?.classId) &&
-                match(kid(a.childId)?.fullName ?? ""),
+                matchKidId(a.childId),
             )
             .sort((a, b) => b.checkInAt.localeCompare(a.checkInAt))
             .map((a) => [
@@ -157,7 +167,7 @@ function ReportsPage() {
               (c) =>
                 openAttendance(state.attendance, c.id) &&
                 classOk(c.classId) &&
-                match(c.fullName),
+                matchKid(c),
             )
             .sort(
               (a, b) =>
@@ -187,7 +197,7 @@ function ReportsPage() {
               (c) =>
                 inRange(c.createdAt) &&
                 classOk(c.classId) &&
-                match(kid(c.childId)?.fullName ?? ""),
+                matchKidId(c.childId),
             )
             .map((c) => [
               dateTime(c.createdAt),
@@ -212,7 +222,7 @@ function ReportsPage() {
           headers: ["Criança", "Código", "Turma", "Pendências"],
           rows: state.children
             .filter(
-              (c) => isIncomplete(c) && classOk(c.classId) && match(c.fullName),
+              (c) => isIncomplete(c) && classOk(c.classId) && matchKid(c),
             )
             .map((c) => [
               c.fullName,
@@ -330,7 +340,7 @@ function ReportsPage() {
             <SearchBox
               value={q}
               onChange={setQ}
-              placeholder="Filtrar por criança"
+              placeholder={CHILD_SEARCH_PLACEHOLDER}
             />
           </div>
         </div>

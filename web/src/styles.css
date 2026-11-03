@@ -139,10 +139,23 @@
   main {
     padding: 0 !important;
   }
+  /* Etiquetas (crachá e sala): Brother QL-800, rolo DK-11201 29×90 mm.
+     Uma etiqueta por página, sem margem; relatórios continuam em A4. */
+  @page etiqueta {
+    size: 90mm 29mm;
+    margin: 0;
+  }
   .print-sheet {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4mm;
+    page: etiqueta;
+    display: block;
+  }
+  .print-sheet > * {
+    break-after: page;
+    page-break-after: always;
+  }
+  .print-sheet > *:last-child {
+    break-after: auto;
+    page-break-after: auto;
   }
   .badge-card {
     break-inside: avoid;

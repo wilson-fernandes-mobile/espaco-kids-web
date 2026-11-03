@@ -52,6 +52,11 @@ import {
 } from "@/components/ui/table";
 import type { Badge, Child } from "@/lib/domain/types";
 
+import {
+  CHILD_SEARCH_PLACEHOLDER,
+  makeChildMatcher,
+} from "@/lib/domain/search";
+
 export const Route = createFileRoute("/crachas")({
   validateSearch: (s: Record<string, unknown>): { crianca?: string } => ({
     crianca: typeof s.crianca === "string" ? s.crianca : undefined,
@@ -86,17 +91,11 @@ function BadgesPage() {
       .sort((a, b) => b.issuedAt.localeCompare(a.issuedAt))[0];
 
   const rows = useMemo(() => {
-    const t = q.trim().toLowerCase();
     return state.children
       .filter((c) => c.status !== "inativo")
-      .filter(
-        (c) =>
-          !t ||
-          c.fullName.toLowerCase().includes(t) ||
-          c.code.toLowerCase().includes(t),
-      )
+      .filter(makeChildMatcher(state, q))
       .sort((a, b) => a.fullName.localeCompare(b.fullName, "pt-BR"));
-  }, [state.children, q]);
+  }, [state.children, state.classes, state.guardians, q]);
   const pg = usePagination(rows, 10);
 
   if (!can(role, "crachas")) return <Restricted />;
@@ -181,7 +180,7 @@ function BadgesPage() {
                 <SearchBox
                   value={q}
                   onChange={setQ}
-                  placeholder="Buscar criança ou código"
+                  placeholder={CHILD_SEARCH_PLACEHOLDER}
                 />
               </div>
               {rows.length === 0 ? (

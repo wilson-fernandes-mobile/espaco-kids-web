@@ -1,5 +1,13 @@
 # Impressora para crachás
 
+## Impressora em uso: Brother QL-800 + etiqueta DK-11201 (29×90 mm)
+- Crachás e etiquetas de sala já saem em **90×29 mm**, uma etiqueta por página, sem margem (`@page etiqueta` em `web/src/styles.css`). Relatórios continuam em A4.
+- Em **Configurações → Crachá** use largura **90** e altura **29** (padrão para igrejas novas; igrejas já cadastradas com 90×55 precisam ajustar uma vez).
+- No diálogo de impressão: impressora *Brother QL-800*, papel **29 mm x 90 mm**, margens *Nenhuma*, escala *100%* (desmarque "ajustar à página"). Se sair girado/cortado, alterne a orientação.
+- Se as etiquetas saírem com espaço em branco extra, no driver da Brother desative "Cortar a cada etiqueta" apenas se quiser fita contínua; deixe ativo para cortar uma a uma.
+
+(Abaixo, o guia geral original.)
+
 O sistema imprime pelo diálogo de impressão do navegador (CSS de impressão, tamanho configurável em **Configurações → Crachás**). Qualquer impressora com driver para o computador/tablet da recepção funciona; para crachá com QR Code, **impressora térmica de etiquetas** é a melhor escolha (rápida, sem tinta, etiqueta adesiva).
 
 ## Recomendação

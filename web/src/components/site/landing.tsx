@@ -95,7 +95,7 @@ export function LandingPage() {
             </Link>
           </div>
           <p className="mt-4 text-xs opacity-80">
-            Grátis até 30 crianças. Sem cartão de crédito.
+            Grátis até 20 crianças. Sem cartão de crédito.
           </p>
         </div>
       </section>

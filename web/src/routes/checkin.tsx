@@ -3,10 +3,10 @@ import { useMemo, useState } from "react";
 import {
   AlertTriangle,
   ArrowLeft,
-  CheckCircle2,
   Loader2,
   LogIn,
   LogOut,
+  Printer,
   ShieldAlert,
   ShieldCheck,
 } from "lucide-react";
@@ -18,6 +18,11 @@ import {
   validateCheckIn,
 } from "@/lib/domain/rules";
 import { time } from "@/lib/domain/labels";
+import { LOCKED_REASON } from "@/lib/billing";
+import {
+  CHILD_SEARCH_PLACEHOLDER,
+  makeChildMatcher,
+} from "@/lib/domain/search";
 import {
   EmptyState,
   KidAvatar,
@@ -32,6 +37,8 @@ import {
   SearchBox,
   selectCls,
 } from "@/components/app/page-bits";
+import { BadgeCard } from "@/components/app/badge-card";
+import { SuccessAnimation } from "@/components/app/success-animation";
 import { ScanToggle, parseQr } from "@/components/app/qr-scanner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -62,7 +69,7 @@ const OTHER = "__other__";
 function CheckPage() {
   const { modo = "entrada" } = Route.useSearch();
   const navigate = Route.useNavigate();
-  const { state, role, loading, checkIn, checkOut } = useStore();
+  const { state, role, loading, checkIn, checkOut, plan } = useStore();
   const [q, setQ] = useState("");
   const [sel, setSel] = useState<Child | null>(null);
   const [who, setWho] = useState("");
@@ -76,6 +83,7 @@ function CheckPage() {
     at: string;
   } | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
+  const [printing, setPrinting] = useState(false);
 
   const present = useMemo(
     () => state.children.filter((c) => openAttendance(state.attendance, c.id)),
@@ -86,18 +94,32 @@ function CheckPage() {
       ? present
       : state.children.filter((c) => c.status !== "inativo");
   const results = useMemo(() => {
-    const t = q.trim().toLowerCase();
-    if (modo === "entrada" && !t) return [];
-    return pool
-      .filter(
-        (c) =>
-          !t ||
-          c.fullName.toLowerCase().includes(t) ||
-          c.nickname.toLowerCase().includes(t) ||
-          c.code.toLowerCase().includes(t),
+    if (modo === "entrada" && !q.trim()) return [];
+    const found = pool
+      .filter(makeChildMatcher(state, q))
+      .sort((a, b) => a.fullName.localeCompare(b.fullName, "pt-BR"));
+    // Na saída mostra todos os presentes; na entrada limita a lista.
+    return modo === "saida" ? found : found.slice(0, 40);
+  }, [pool, q, modo, state.classes, state.guardians]);
+
+  // Agrupa por turma (linha do tempo: Berçário, Juniors…), na ordem das turmas.
+  const groups = useMemo(() => {
+    const order = new Map(state.classes.map((c, i) => [c.id, i]));
+    const map = new Map<string, Child[]>();
+    for (const c of results) {
+      const k = c.classId ?? "";
+      map.set(k, [...(map.get(k) ?? []), c]);
+    }
+    return [...map.entries()]
+      .sort(
+        ([a], [b]) => (order.get(a) ?? 999) - (order.get(b) ?? 999),
       )
-      .slice(0, 12);
-  }, [pool, q, modo]);
+      .map(([classId, kids]) => ({
+        classId,
+        name: state.classes.find((x) => x.id === classId)?.name ?? "Sem turma",
+        kids,
+      }));
+  }, [results, state.classes]);
 
   if (!can(role, "checkin")) return <Restricted />;
   if (loading) return <PageLoading />;
@@ -161,7 +183,8 @@ function CheckPage() {
     setVerified(false);
     if (modo === "entrada") {
       const r = validateCheckIn(state, c);
-      if (!r.ok) setProblem(r.reason);
+      if (plan.lockedIds.has(c.id)) setProblem(LOCKED_REASON);
+      else if (!r.ok) setProblem(r.reason);
     } else if (!openAttendance(state.attendance, c.id))
       setProblem("Não há entrada registrada para esta criança.");
     setSel(c);
@@ -227,21 +250,30 @@ function CheckPage() {
     toast.warning("Tentativa registrada e coordenação notificada.");
   };
 
-  if (done)
+  const printBadge = () => {
+    setPrinting(true);
+    setTimeout(() => {
+      window.print();
+      setPrinting(false);
+    }, 150);
+  };
+
+  if (done) {
+    const doneBadge =
+      done.kind === "in"
+        ? state.badges.find(
+            (b) =>
+              b.childId === done.child.id &&
+              b.status === "ativo" &&
+              new Date(b.expiresAt) >= new Date(),
+          )
+        : undefined;
     return (
-      <div className="mx-auto max-w-lg">
+      <>
+      <div className="no-print mx-auto max-w-lg">
         <div className="card-surface p-8 text-center">
-          <div
-            className={cn(
-              "mx-auto grid size-16 place-items-center rounded-full",
-              done.kind === "in"
-                ? "bg-success-soft text-success"
-                : "bg-primary-soft text-primary",
-            )}
-          >
-            <CheckCircle2 className="size-9" />
-          </div>
-          <h1 className="mt-4 text-2xl font-bold">
+          <SuccessAnimation />
+          <h1 className="mt-2 text-2xl font-bold">
             {done.kind === "in" ? "Entrada registrada" : "Saída registrada"}
           </h1>
           <div className="mt-4 flex items-center justify-center gap-3">
@@ -258,12 +290,59 @@ function CheckPage() {
             <strong className="text-foreground">{done.by}</strong> às{" "}
             {time(done.at)}
           </p>
-          <Button size="lg" className="mt-6 h-12 w-full" onClick={reset}>
+          {done.kind === "in" && (
+            <div className="mt-6 rounded-xl border bg-muted/40 p-4">
+              {doneBadge ? (
+                <>
+                  <p className="font-semibold">Deseja imprimir o crachá?</p>
+                  <div className="mt-3 grid grid-cols-2 gap-3">
+                    <Button size="lg" className="h-12" onClick={printBadge}>
+                      <Printer /> Imprimir crachá
+                    </Button>
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="h-12"
+                      onClick={reset}
+                    >
+                      Não imprimir
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Esta criança não tem crachá ativo. Emita em{" "}
+                  <strong>Crachás</strong> para poder imprimir.
+                </p>
+              )}
+            </div>
+          )}
+          <Button
+            size="lg"
+            variant={done.kind === "in" && doneBadge ? "ghost" : "default"}
+            className="mt-4 h-12 w-full"
+            onClick={reset}
+          >
             {done.kind === "in" ? "Próxima criança" : "Concluir"}
           </Button>
         </div>
       </div>
+      {printing && doneBadge && (
+        <div className="print-only">
+          <div className="print-sheet">
+            <BadgeCard
+              child={done.child}
+              badge={doneBadge}
+              cls={cls(done.child)}
+              family={state.families.find((f) => f.id === done.child.familyId)}
+              settings={state.settings}
+            />
+          </div>
+        </div>
+      )}
+      </>
     );
+  }
 
   return (
     <>
@@ -312,7 +391,7 @@ function CheckPage() {
               <SearchBox
                 value={q}
                 onChange={setQ}
-                placeholder="Nome, apelido ou código"
+                placeholder={CHILD_SEARCH_PLACEHOLDER}
               />
               <ScanToggle onResult={onScan} />
             </div>
@@ -332,30 +411,45 @@ function CheckPage() {
                 }
               />
             ) : (
-              <ul className="space-y-2">
-                {results.map((c) => (
-                  <li key={c.id}>
-                    <button
-                      onClick={() => pick(c)}
-                      className={cn(
-                        "flex w-full items-center gap-3 rounded-xl border p-3 text-left transition-colors hover:bg-muted",
-                        sel?.id === c.id && "border-primary bg-primary-soft",
-                      )}
-                    >
-                      <KidAvatar child={c} />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate font-semibold">{c.fullName}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {cls(c)?.name} • {c.code}
-                        </p>
-                      </div>
-                      {openAttendance(state.attendance, c.id) ? (
-                        <StatusPill value="presente" label="Presente" />
-                      ) : null}
-                    </button>
-                  </li>
+              <div className="space-y-5">
+                {groups.map((g) => (
+                  <section key={g.classId}>
+                    <h3 className="mb-2 flex items-center gap-2 border-l-4 border-primary pl-2 text-sm font-bold">
+                      {g.name}
+                      <span className="rounded-full bg-muted px-2 text-xs font-medium text-muted-foreground">
+                        {g.kids.length}
+                      </span>
+                    </h3>
+                    <ul className="space-y-2 border-l-2 border-dashed border-primary/30 pl-3">
+                      {g.kids.map((c) => (
+                        <li key={c.id}>
+                          <button
+                            onClick={() => pick(c)}
+                            className={cn(
+                              "flex w-full items-center gap-3 rounded-xl border p-3 text-left transition-colors hover:bg-muted",
+                              sel?.id === c.id &&
+                                "border-primary bg-primary-soft",
+                            )}
+                          >
+                            <KidAvatar child={c} />
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate font-semibold">
+                                {c.fullName}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {cls(c)?.name} • {c.code}
+                              </p>
+                            </div>
+                            {openAttendance(state.attendance, c.id) ? (
+                              <StatusPill value="presente" label="Presente" />
+                            ) : null}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
                 ))}
-              </ul>
+              </div>
             )}
           </div>
         </Panel>

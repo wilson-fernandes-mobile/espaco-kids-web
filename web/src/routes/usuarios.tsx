@@ -14,7 +14,13 @@ import {
   KeyRound,
   RefreshCw,
 } from "lucide-react";
-import { ChurchQr } from "@/components/app/church-qr";
+import {
+  ChurchQr,
+  CodeLabelSheet,
+  PrintCodeLabelButton,
+  usePrintCodeLabel,
+  type CodeLabelData,
+} from "@/components/app/church-qr";
 import { useStore } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
 import { can, PERMISSIONS, ROLE_LABEL } from "@/lib/domain/rules";
@@ -230,7 +236,7 @@ function UserDialog({
   );
 }
 
-function JoinCodePanel() {
+function JoinCodePanel({ onPrint }: { onPrint: (l: CodeLabelData) => void }) {
   const { state, createJoinCode, revokeJoinCodes } = useStore();
   const code = state.joinCodes.find((i) => i.active)?.id;
   const copy = async () => {
@@ -239,14 +245,17 @@ function JoinCodePanel() {
       await navigator.clipboard.writeText(code);
       toast.success("Código copiado.");
     } catch {
-      toast.error("Não foi possível copiar. Selecione o código e copie manualmente.");
+      toast.error(
+        "Não foi possível copiar. Selecione o código e copie manualmente.",
+      );
     }
   };
   return (
     <Panel title="Código de entrada dos pais" className="mb-6">
       <p className="mb-4 text-sm text-muted-foreground">
         Um código só para a igreja inteira. Os pais baixam o app, tocam em{" "}
-        <strong>Criar conta → Sou da família</strong>, digitam este código (ou leem o QR Code) e{" "}
+        <strong>Criar conta → Sou da família</strong>, digitam este código (ou
+        leem o QR Code) e{" "}
         <strong>eles mesmos cadastram a família e as crianças</strong>. A equipe
         só precisa passar o código.
       </p>
@@ -259,10 +268,22 @@ function JoinCodePanel() {
           <Button variant="outline" onClick={copy}>
             <Copy /> Copiar
           </Button>
+          <PrintCodeLabelButton
+            onPrint={() =>
+              onPrint({
+                code,
+                title: "Código de entrada dos pais",
+                hint: "Pais: no app, Criar conta › Sou da família, leia o QR ou digite o código",
+              })
+            }
+          />
           <Button
             variant="outline"
             onClick={() =>
-              attempt(createJoinCode, "Novo código gerado; o anterior deixou de valer.")
+              attempt(
+                createJoinCode,
+                "Novo código gerado; o anterior deixou de valer.",
+              )
             }
           >
             <RefreshCw /> Gerar novo
@@ -287,7 +308,7 @@ function JoinCodePanel() {
   );
 }
 
-function InvitePanel() {
+function InvitePanel({ onPrint }: { onPrint: (l: CodeLabelData) => void }) {
   const { state, createInvite, revokeInvites } = useStore();
   const code = state.invites.find((i) => i.active)?.id;
   const copy = async () => {
@@ -318,6 +339,15 @@ function InvitePanel() {
           <Button variant="outline" onClick={copy}>
             <Copy /> Copiar
           </Button>
+          <PrintCodeLabelButton
+            onPrint={() =>
+              onPrint({
+                code,
+                title: "Código de convite da equipe",
+                hint: "Equipe: no app, Criar cadastro › Entrar com código, leia o QR ou digite",
+              })
+            }
+          />
           <Button
             variant="outline"
             onClick={() =>
@@ -353,6 +383,7 @@ function UsersPage() {
   const { state, role, loading, saveUser } = useStore();
   const { profile } = useAuth();
   const [dlg, setDlg] = useState<AppUser | "new" | null>(null);
+  const { label, print } = usePrintCodeLabel();
   if (!can(role, "usuarios")) return <Restricted />;
   if (loading) return <PageLoading />;
   const users = [...state.users].sort((a, b) =>
@@ -361,145 +392,148 @@ function UsersPage() {
 
   return (
     <>
-      <PageHeader
-        title="Usuários e permissões"
-        description={`${users.length} usuário(s)`}
-        actions={
-          <Button onClick={() => setDlg("new")}>
-            <UserPlus /> Novo usuário
-          </Button>
-        }
-      />
-      <ErrorBanner />
-      <JoinCodePanel />
-      <InvitePanel />
-      <div className="card-surface mb-6">
-        {users.length === 0 ? (
-          <EmptyState title="Nenhum usuário" />
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead className="hidden md:table-cell">E-mail</TableHead>
-                <TableHead>Perfil</TableHead>
-                <TableHead className="hidden sm:table-cell">Turmas</TableHead>
-                <TableHead>Ativo</TableHead>
-                <TableHead className="text-right">Editar</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map((u) => (
-                <TableRow key={u.id}>
-                  <TableCell className="font-medium">
-                    {u.name}
-                    {u.id === profile?.id && (
-                      <span className="ml-2 text-xs text-muted-foreground">
-                        (você)
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    {u.email}
-                  </TableCell>
-                  <TableCell>
-                    <StatusPill
-                      value="ativo"
-                      label={ROLE_LABEL[u.role]}
-                      tone="primary"
-                    />
-                  </TableCell>
-                  <TableCell className="hidden sm:table-cell text-sm">
-                    {u.role === "professor"
-                      ? u.classIds
-                          .map(
-                            (id) =>
-                              state.classes.find((c) => c.id === id)?.name,
-                          )
-                          .filter(Boolean)
-                          .join(", ") || "—"
-                      : "—"}
-                  </TableCell>
-                  <TableCell>
-                    <Switch
-                      checked={u.active}
-                      disabled={u.id === profile?.id}
-                      aria-label={`Ativar ${u.name}`}
-                      onCheckedChange={(v) =>
-                        attempt(
-                          () => saveUser(u.id, { active: v }),
-                          v ? "Usuário ativado." : "Usuário desativado.",
-                        )
-                      }
-                    />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label={`Editar ${u.name}`}
-                      onClick={() => setDlg(u)}
-                    >
-                      <Pencil />
-                    </Button>
-                  </TableCell>
+      <div className="no-print">
+        <PageHeader
+          title="Usuários e permissões"
+          description={`${users.length} usuário(s)`}
+          actions={
+            <Button onClick={() => setDlg("new")}>
+              <UserPlus /> Novo usuário
+            </Button>
+          }
+        />
+        <ErrorBanner />
+        <JoinCodePanel onPrint={print} />
+        <InvitePanel onPrint={print} />
+        <div className="card-surface mb-6">
+          {users.length === 0 ? (
+            <EmptyState title="Nenhum usuário" />
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead className="hidden md:table-cell">E-mail</TableHead>
+                  <TableHead>Perfil</TableHead>
+                  <TableHead className="hidden sm:table-cell">Turmas</TableHead>
+                  <TableHead>Ativo</TableHead>
+                  <TableHead className="text-right">Editar</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </div>
-
-      <Panel title="Matriz de permissões">
-        <div className="mb-3 flex gap-2 text-xs text-muted-foreground">
-          <Info className="size-4 shrink-0" />A matriz é aplicada no servidor
-          pelas Security Rules do Firestore; esconder botões não é a única
-          proteção.
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[560px] text-sm">
-            <thead>
-              <tr className="border-b text-left text-xs text-muted-foreground">
-                <th className="py-2 pr-4 font-medium">Módulo</th>
-                {(Object.keys(ROLE_LABEL) as Role[]).map((r) => (
-                  <th key={r} className="px-2 py-2 text-center font-medium">
-                    {ROLE_LABEL[r]}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {MODULES.map(([k, label]) => (
-                <tr key={k} className="border-b last:border-0">
-                  <td className="py-2 pr-4">{label}</td>
-                  {(Object.keys(ROLE_LABEL) as Role[]).map((r) => (
-                    <td key={r} className="px-2 py-2 text-center">
-                      {PERMISSIONS[r].includes(k as never) ? (
-                        <ShieldCheck
-                          className="mx-auto size-4 text-success"
-                          aria-label="Permitido"
-                        />
-                      ) : (
-                        <span
-                          className="text-muted-foreground"
-                          aria-label="Sem acesso"
-                        >
-                          —
+              </TableHeader>
+              <TableBody>
+                {users.map((u) => (
+                  <TableRow key={u.id}>
+                    <TableCell className="font-medium">
+                      {u.name}
+                      {u.id === profile?.id && (
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          (você)
                         </span>
                       )}
-                    </td>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      {u.email}
+                    </TableCell>
+                    <TableCell>
+                      <StatusPill
+                        value="ativo"
+                        label={ROLE_LABEL[u.role]}
+                        tone="primary"
+                      />
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell text-sm">
+                      {u.role === "professor"
+                        ? u.classIds
+                            .map(
+                              (id) =>
+                                state.classes.find((c) => c.id === id)?.name,
+                            )
+                            .filter(Boolean)
+                            .join(", ") || "—"
+                        : "—"}
+                    </TableCell>
+                    <TableCell>
+                      <Switch
+                        checked={u.active}
+                        disabled={u.id === profile?.id}
+                        aria-label={`Ativar ${u.name}`}
+                        onCheckedChange={(v) =>
+                          attempt(
+                            () => saveUser(u.id, { active: v }),
+                            v ? "Usuário ativado." : "Usuário desativado.",
+                          )
+                        }
+                      />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Editar ${u.name}`}
+                        onClick={() => setDlg(u)}
+                      >
+                        <Pencil />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </div>
+
+        <Panel title="Matriz de permissões">
+          <div className="mb-3 flex gap-2 text-xs text-muted-foreground">
+            <Info className="size-4 shrink-0" />A matriz é aplicada no servidor
+            pelas Security Rules do Firestore; esconder botões não é a única
+            proteção.
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[560px] text-sm">
+              <thead>
+                <tr className="border-b text-left text-xs text-muted-foreground">
+                  <th className="py-2 pr-4 font-medium">Módulo</th>
+                  {(Object.keys(ROLE_LABEL) as Role[]).map((r) => (
+                    <th key={r} className="px-2 py-2 text-center font-medium">
+                      {ROLE_LABEL[r]}
+                    </th>
                   ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Panel>
-      <UserDialog
-        open={dlg !== null}
-        initial={dlg && dlg !== "new" ? dlg : undefined}
-        onClose={() => setDlg(null)}
-      />
+              </thead>
+              <tbody>
+                {MODULES.map(([k, label]) => (
+                  <tr key={k} className="border-b last:border-0">
+                    <td className="py-2 pr-4">{label}</td>
+                    {(Object.keys(ROLE_LABEL) as Role[]).map((r) => (
+                      <td key={r} className="px-2 py-2 text-center">
+                        {PERMISSIONS[r].includes(k as never) ? (
+                          <ShieldCheck
+                            className="mx-auto size-4 text-success"
+                            aria-label="Permitido"
+                          />
+                        ) : (
+                          <span
+                            className="text-muted-foreground"
+                            aria-label="Sem acesso"
+                          >
+                            —
+                          </span>
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Panel>
+        <UserDialog
+          open={dlg !== null}
+          initial={dlg && dlg !== "new" ? dlg : undefined}
+          onClose={() => setDlg(null)}
+        />
+      </div>
+      <CodeLabelSheet label={label} />
     </>
   );
 }

@@ -7,41 +7,59 @@ export const roomTagValue = (churchId: string, classId: string) =>
   `EKT:${churchId}:${classId}`;
 
 /**
- * Etiqueta da sala para colar na porta: a equipe lê o QR no app para fazer
- * check-in na sala e os pais passam a ver quem está com as crianças.
+ * Etiqueta da sala (Brother 29×90 mm, DK-11201): a equipe lê o QR no app para
+ * fazer check-in na sala e os pais passam a ver quem está com as crianças.
  */
 export function RoomTag({
   cls,
   churchId,
   churchName,
+  logoUrl,
 }: {
   cls: ClassRoom;
   churchId: string;
   churchName?: string;
+  /** Logo definida pela igreja em Configurações; sem ela, usa o ícone do app. */
+  logoUrl?: string;
 }) {
   return (
     <div
-      className="badge-card flex w-[100mm] flex-col items-center gap-3 rounded-2xl border-2 border-primary bg-white p-6 text-center text-black"
+      className="badge-card relative flex h-[29mm] w-[90mm] items-center gap-2 overflow-hidden border border-slate-800 bg-white px-[2mm] py-[1.5mm] text-black"
       style={{ breakInside: "avoid" }}
     >
-      <div className="flex items-center gap-2">
-        <AppLogo className="size-8" />
-        <span className="text-sm font-bold">
-          {churchName ? `${churchName} · Espaço Kids` : "Espaço Kids"}
-        </span>
+      <div className="flex min-w-0 flex-1 flex-col justify-center gap-[1mm]">
+        <div className="flex items-center gap-1 text-[6pt] font-bold uppercase leading-none">
+          {logoUrl ? (
+            <img
+              src={logoUrl}
+              alt=""
+              className="h-[3mm] w-[3mm] shrink-0 object-contain"
+            />
+          ) : (
+            <AppLogo className="h-[3mm] w-[3mm]" />
+          )}
+          <span className="truncate">
+            {churchName ? `${churchName} · Espaço Kids` : "Espaço Kids"}
+          </span>
+        </div>
+        <h2 className="truncate text-[16pt] font-extrabold leading-none">
+          {cls.name}
+        </h2>
+        {cls.room && (
+          <p className="truncate text-[8pt] leading-none text-slate-700">
+            {cls.room}
+          </p>
+        )}
+        <p className="text-[6pt] leading-tight text-slate-700">
+          Equipe: leia no app para entrar na sala
+        </p>
       </div>
-      <h2 className="text-3xl font-extrabold leading-tight">{cls.name}</h2>
-      {cls.room && <p className="-mt-2 text-base text-gray-600">{cls.room}</p>}
       <QRCodeSVG
         value={roomTagValue(churchId, cls.id)}
-        size={220}
         level="M"
-        marginSize={1}
+        marginSize={0}
+        className="h-[24mm] w-[24mm] shrink-0"
       />
-      <p className="text-sm font-semibold">Equipe: leia no app para entrar na sala</p>
-      <p className="text-xs text-gray-500">
-        Espaço Kids › Ler crachá ou sala
-      </p>
     </div>
   );
 }

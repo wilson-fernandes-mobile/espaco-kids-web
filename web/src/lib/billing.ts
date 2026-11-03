@@ -4,7 +4,7 @@ export const TRIAL_DAYS = 14;
 export type PlanId = "inicio" | "crescimento" | "expansao" | "ilimitado";
 
 export const PLAN_INFO: Record<PlanId, { name: string; limit: number }> = {
-  inicio: { name: "Início", limit: 30 },
+  inicio: { name: "Início", limit: 20 },
   crescimento: { name: "Crescimento", limit: 100 },
   expansao: { name: "Expansão", limit: 250 },
   ilimitado: { name: "Ilimitado", limit: Infinity },
@@ -28,6 +28,27 @@ export interface PlanState {
 }
 
 const DAY = 86400000;
+
+export const LOCKED_REASON =
+  "Cadastro bloqueado: a igreja passou do limite de crianças do plano. Assine um plano maior em Configurações > Plano para liberar.";
+
+/**
+ * Crianças bloqueadas por excesso do limite do plano (ex.: igreja que voltou
+ * ao Início com 35 crianças). Ficam liberadas as primeiras `limit` por ordem de
+ * cadastro (número do código); as demais ficam bloqueadas para check-in até
+ * assinar um plano maior. Nenhum dado é apagado.
+ */
+export function lockedChildIds(
+  children: { id: string; code: string; status: string }[],
+  limit: number,
+): Set<string> {
+  if (!Number.isFinite(limit)) return new Set();
+  const num = (code: string) => Number(code.replace(/\D/g, "")) || 0;
+  const active = children
+    .filter((c) => c.status !== "inativo")
+    .sort((a, b) => num(a.code) - num(b.code));
+  return new Set(active.slice(limit).map((c) => c.id));
+}
 
 /**
  * Teste grátis de 14 dias com o limite do Expansão; depois volta ao Início
