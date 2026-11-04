@@ -10,6 +10,14 @@ final familyRepositoryProvider = Provider<FamilyRepository>(
   ),
 );
 
+/// Nome e foto da família. Chave: (igreja, família).
+final familyProfileProvider =
+    StreamProvider.family<({String name, String? photoUrl})?, (String, String)>(
+      (ref, key) => ref
+          .watch(familyRepositoryProvider)
+          .watchFamilyProfile(key.$1, key.$2),
+    );
+
 /// Código ativo da família (`LK-…`), se já foi gerado. Chave: (igreja, família).
 final familyCodeProvider = StreamProvider.family<String?, (String, String)>(
   (ref, key) =>

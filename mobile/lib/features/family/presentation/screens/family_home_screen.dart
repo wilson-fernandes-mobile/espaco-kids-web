@@ -24,6 +24,7 @@ import '../../../kids/domain/entities/room_staff.dart';
 import '../providers/family_providers.dart';
 import '../widgets/child_form.dart';
 import '../widgets/family_code_card.dart';
+import '../widgets/family_profile_card.dart';
 
 /// Início da família: filhos, se estão na sala e pedidos de entrada/saída.
 class FamilyHomeScreen extends ConsumerWidget {
@@ -65,6 +66,7 @@ class FamilyHomeScreen extends ConsumerWidget {
               ),
               const SizedBox(height: AppSpacing.md),
               if (user.personId == null) const _WhoAreYouCard(),
+              const FamilyProfileCard(),
               if (kids.isEmpty)
                 const SizedBox(
                   height: 280,

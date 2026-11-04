@@ -44,6 +44,10 @@ export function IncidentPanel({ childId }: { childId?: string }) {
   const isMod = role === "admin" || role === "coordenacao";
   const canTouch = (i: Incident) => isMod || i.authorId === profile?.id;
   const name = (id: string) => kids.get(id)?.nickname ?? "Criança removida";
+  // Turma da criança na hora da ocorrência (cai na turma atual se faltar).
+  const className = (i: Incident) =>
+    state.classes.find((c) => c.id === (i.classId || kids.get(i.childId)?.classId))
+      ?.name;
 
   return (
     <div className="space-y-4">
@@ -89,6 +93,11 @@ export function IncidentPanel({ childId }: { childId?: string }) {
                   {i.involvedChildIds.length > 0 &&
                     ` com ${i.involvedChildIds.map(name).join(", ")}`}
                 </span>
+                {className(i) && (
+                  <span className="rounded-full border border-primary/30 bg-primary-soft px-2 py-0.5 text-xs font-medium text-primary">
+                    {className(i)}
+                  </span>
+                )}
                 {i.sharedWithFamily && (
                   <StatusPill
                     value="enviada"
@@ -186,13 +195,21 @@ function IncidentDialog({
   const [shared, setShared] = useState(initial?.sharedWithFamily ?? false);
   const [busy, setBusy] = useState(false);
 
-  const kids = state.children
+  // Filtro opcional por turma: sem seleção, a lista mostra todas as crianças.
+  const [classFilter, setClassFilter] = useState("");
+  const allKids = state.children
     .filter((c) => c.status !== "inativo")
     .sort((a, b) => a.fullName.localeCompare(b.fullName));
+  const kids = classFilter
+    ? allKids.filter((c) => c.classId === classFilter)
+    : allKids;
+  const classes = [...state.classes].sort((a, b) =>
+    a.name.localeCompare(b.name, "pt-BR"),
+  );
   // Só quem está na sala com a criança agora (mesma turma e presente); mantém
   // as já marcadas para não perder ao editar.
-  const classId = kids.find((c) => c.id === childId)?.classId;
-  const inRoom = kids.filter(
+  const classId = allKids.find((c) => c.id === childId)?.classId;
+  const inRoom = allKids.filter(
     (c) =>
       c.id !== childId &&
       (others.includes(c.id) ||
@@ -212,6 +229,31 @@ function IncidentDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
+          {!fixedChildId && !initial && (
+            <Field label="Turma (opcional)">
+              <select
+                className={selectCls}
+                value={classFilter}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setClassFilter(v);
+                  // Se a criança escolhida não é dessa turma, limpa a escolha.
+                  const sel = allKids.find((c) => c.id === childId);
+                  if (v && sel && sel.classId !== v) {
+                    setChildId("");
+                    setOthers([]);
+                  }
+                }}
+              >
+                <option value="">Todas as turmas</option>
+                {classes.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
           <Field label="Criança">
             <select
               className={selectCls}
@@ -226,10 +268,21 @@ function IncidentDialog({
               {kids.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.fullName}
+                  {state.classes.find((x) => x.id === c.classId)
+                    ? ` — ${state.classes.find((x) => x.id === c.classId)!.name}`
+                    : ""}
                 </option>
               ))}
             </select>
           </Field>
+          {classId && (
+            <p className="-mt-1 text-xs text-muted-foreground">
+              Turma:{" "}
+              <strong className="text-foreground">
+                {state.classes.find((x) => x.id === classId)?.name ?? "—"}
+              </strong>
+            </p>
+          )}
           <Field label="Tipo">
             <select
               className={selectCls}

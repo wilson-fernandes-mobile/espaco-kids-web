@@ -57,6 +57,8 @@ export interface Family {
   phone: string;
   email?: string;
   address?: string;
+  /** Foto da família (opcional), escolhida pela própria família no app. */
+  photoUrl?: string;
 }
 
 export interface ClassRoom {

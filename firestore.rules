@@ -227,7 +227,12 @@ service cloud.firestore {
               && request.resource.data.ownerUid == request.auth.uid);
         allow update: if canRegister(churchId)
           || (ownFamilyDoc(churchId, id)
-              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'phone', 'email', 'address']));
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'phone', 'email', 'address', 'photoUrl'])
+              && request.resource.data.name is string
+              && request.resource.data.name.size() >= 2 && request.resource.data.name.size() <= 80
+              // Foto opcional: data URL pequena (o app grava ~15 KB).
+              && (!('photoUrl' in request.resource.data)
+                  || (request.resource.data.photoUrl is string && request.resource.data.photoUrl.size() < 60000)));
         allow delete: if isCoord(churchId);
       }
       match /guardians/{id} {

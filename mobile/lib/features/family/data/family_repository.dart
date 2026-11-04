@@ -113,6 +113,50 @@ class FamilyRepository {
   }
 
 
+  /// Nome e foto da família (para o cartão "Minha família").
+  Stream<({String name, String? photoUrl})?> watchFamilyProfile(
+    String churchId,
+    String familyId,
+  ) =>
+      _tenant(churchId)
+          .collection('families')
+          .doc(familyId)
+          .snapshots()
+          .map((s) {
+            final m = s.data();
+            if (m == null) return null;
+            final p = m['photoUrl'] as String?;
+            return (
+              name: (m['name'] as String?) ?? 'Minha família',
+              photoUrl: (p == null || p.isEmpty) ? null : p,
+            );
+          })
+          .handleError((_) {});
+
+  /// Altera o nome da família e, se vier, a foto. [photoUrl] null mantém a
+  /// atual; vazio remove.
+  Future<void> updateFamilyProfile({
+    required String churchId,
+    required String familyId,
+    required String name,
+    String? photoUrl,
+  }) async {
+    final n = name.trim();
+    if (n.length < 2) throw const Failure('Informe o nome da família.');
+    try {
+      await _tenant(churchId).collection('families').doc(familyId).update({
+        'name': n,
+        if (photoUrl != null)
+          'photoUrl': photoUrl.isEmpty ? FieldValue.delete() : photoUrl,
+      });
+    } on FirebaseException catch (e) {
+      if (e.code == 'permission-denied') {
+        throw const Failure('Não foi possível salvar. Tente de novo.');
+      }
+      rethrow;
+    }
+  }
+
   /// Filhos da família noutra igreja (para escolher o que importar).
   Future<List<Child>> childrenIn(String churchId, String familyId) async {
     final s =

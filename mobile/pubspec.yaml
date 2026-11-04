@@ -1,7 +1,7 @@
 name: espaco_kids
 description: "Espaço Kids — check-in e check-out seguro de crianças no ministério infantil (professores, recepção e famílias)."
 publish_to: 'none'
-version: 1.0.7+7
+version: 1.0.8+8
 
 environment:
   sdk: ^3.7.2

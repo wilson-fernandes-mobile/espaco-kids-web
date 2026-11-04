@@ -198,6 +198,7 @@ function BadgesPage() {
                           <span className="sr-only">Selecionar</span>
                         </TableHead>
                         <TableHead>Criança</TableHead>
+                        <TableHead>Turma</TableHead>
                         <TableHead className="hidden sm:table-cell">
                           Crachá
                         </TableHead>
@@ -233,6 +234,9 @@ function BadgesPage() {
                                   </p>
                                 </div>
                               </div>
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {cls(c)?.name ?? "—"}
                             </TableCell>
                             <TableCell className="hidden sm:table-cell">
                               {b ? (
