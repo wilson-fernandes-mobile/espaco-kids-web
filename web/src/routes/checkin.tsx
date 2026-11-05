@@ -94,17 +94,17 @@ function CheckPage() {
       ? present
       : state.children.filter((c) => c.status !== "inativo");
   const results = useMemo(() => {
-    // Entrada sem busca: mostra quem está presente (sem check-out), por turma.
+    // Entrada sem busca: mostra quem ainda não fez check-in, por turma.
     if (modo === "entrada" && !q.trim())
-      return [...present].sort((a, b) =>
-        a.fullName.localeCompare(b.fullName, "pt-BR"),
-      );
+      return pool
+        .filter((c) => !openAttendance(state.attendance, c.id))
+        .sort((a, b) => a.fullName.localeCompare(b.fullName, "pt-BR"));
     const found = pool
       .filter(makeChildMatcher(state, q))
       .sort((a, b) => a.fullName.localeCompare(b.fullName, "pt-BR"));
     // Na saída mostra todos os presentes; na entrada limita a lista.
     return modo === "saida" ? found : found.slice(0, 40);
-  }, [pool, present, q, modo, state.classes, state.guardians]);
+  }, [pool, q, modo, state.attendance, state.classes, state.guardians]);
 
   // Agrupa por turma (linha do tempo: Berçário, Juniors…), na ordem das turmas.
   const groups = useMemo(() => {
@@ -405,7 +405,7 @@ function CheckPage() {
                   modo === "entrada"
                     ? q
                       ? "Nenhuma criança encontrada"
-                      : "Nenhuma criança presente. Busque ou leia o QR Code"
+                      : "Todas as crianças já fizeram check-in"
                     : "Nenhuma criança presente"
                 }
                 text={
